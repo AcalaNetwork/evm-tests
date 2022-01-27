@@ -7,8 +7,8 @@ use frame_support::{
 	BoundedVec, ConsensusEngineId, RuntimeDebug,
 };
 use frame_system::{AccountInfo, EnsureSignedBy};
-use module_evm::runner::StackState;
 use module_evm::{
+	runner::state::StackState,
 	convert_decimals_to_evm, ContractInfo, EvmTask, MaxCodeSize, SubstrateStackState,
 };
 use module_support::{DispatchableTask, AddressMapping};
@@ -191,7 +191,8 @@ impl module_evm::Config for Runtime {
 	type TxFeePerGas = TxFeePerGas;
 
 	type Event = Event;
-	type Precompiles = ();
+	type PrecompilesType = ();
+	type PrecompilesValue = ();
 	type ChainId = ChainId;
 	type GasToWeight = GasToWeight;
 	type ChargeTransactionPayment = ();

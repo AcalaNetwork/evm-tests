@@ -23,6 +23,7 @@ impl Test {
 			block_gas_limit: Some(self.0.env.gas_limit.clone().into()),
 			block_difficulty: Some(self.0.env.difficulty.clone().into()),
 			block_coinbase: Some(self.0.env.author.clone().into()),
+			block_base_fee_per_gas: Some(self.0.env.block_base_fee_per_gas.0),
 		}
 	}
 
@@ -72,7 +73,7 @@ pub fn test(name: &str, test: Test) {
 
 		let metadata = StackSubstateMetadata::new(test.unwrap_to_gas_limit(), 1_000_000, &config);
 		let state = SubstrateStackState::<Runtime>::new(&vicinity, metadata);
-		let mut executor = StackExecutor::new(state, &config);
+		let mut executor = StackExecutor::new_with_precompiles(state, &config, &());
 
 		let code = test.unwrap_to_code();
 		let data = test.unwrap_to_data();

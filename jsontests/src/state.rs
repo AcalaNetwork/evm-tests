@@ -4,7 +4,7 @@ use ethjson::spec::ForkSpec;
 use evm_utility::evm::{backend::MemoryAccount, Config, ExitError, ExitSucceed};
 use lazy_static::lazy_static;
 use module_evm::{
-	runner::state::{PrecompileFn, PrecompileOutput},
+	runner::state::{PrecompileFn, PrecompileOutput, PrecompileFailure},
 	Context, StackExecutor, StackSubstateMetadata, SubstrateStackState, Vicinity,
 };
 use parity_crypto::publickey;
@@ -43,9 +43,36 @@ impl Test {
 		self.0.env.block_base_fee_per_gas.0
 	}
 
-	pub fn unwrap_to_vicinity(&self, _spec: &ForkSpec) -> Option<Vicinity> {
+	pub fn unwrap_to_vicinity(&self, spec: &ForkSpec) -> Option<Vicinity> {
 		let block_base_fee_per_gas = self.0.env.block_base_fee_per_gas.0;
-		let gas_price = self.0.transaction.gas_price.0;
+		let gas_price = if self.0.transaction.gas_price.0.is_zero() {
+			let max_fee_per_gas = self.0.transaction.max_fee_per_gas.0;
+
+			// max_fee_per_gas is only defined for London and later
+			if !max_fee_per_gas.is_zero() && spec < &ForkSpec::London {
+				return None;
+			}
+
+			// Cannot specify a lower fee than the base fee
+			if max_fee_per_gas < block_base_fee_per_gas {
+				return None;
+			}
+
+			let max_priority_fee_per_gas = self.0.transaction.max_priority_fee_per_gas.0;
+
+			// priority fee must be lower than regaular fee
+			if max_fee_per_gas < max_priority_fee_per_gas {
+				return None;
+			}
+
+			let priority_fee_per_gas = std::cmp::min(
+				max_priority_fee_per_gas,
+				max_fee_per_gas - block_base_fee_per_gas,
+			);
+			priority_fee_per_gas + block_base_fee_per_gas
+		} else {
+			self.0.transaction.gas_price.0
+		};
 
 		// gas price cannot be lower than base fee
 		if gas_price < block_base_fee_per_gas {
@@ -62,7 +89,7 @@ impl Test {
 			block_difficulty: Some(self.0.env.difficulty.clone().into()),
 			block_gas_limit: Some(self.0.env.gas_limit.clone().into()),
 			// chain_id: U256::one(),
-			// block_base_fee_per_gas,
+			block_base_fee_per_gas: Some(block_base_fee_per_gas),
 		})
 	}
 }
@@ -84,26 +111,26 @@ lazy_static! {
 macro_rules! precompile_entry {
 	($map:expr, $builtins:expr, $index:expr) => {
 		let x: fn(
-			H160,
 			&[u8],
 			Option<u64>,
 			&Context,
-		) -> Option<Result<PrecompileOutput, ExitError>> =
-			|_addr: H160, input: &[u8], gas_limit: Option<u64>, _context: &Context| {
+			bool,
+		) -> Result<PrecompileOutput, PrecompileFailure> =
+			|input: &[u8], gas_limit: Option<u64>, _context: &Context, _is_static: bool| {
 				let builtin = $builtins.get(&H160::from_low_u64_be($index)).unwrap();
-				Some(Self::exec_as_precompile(builtin, input, gas_limit))
+				Self::exec_as_precompile(builtin, input, gas_limit)
 			};
 		$map.insert(H160::from_low_u64_be($index), x);
 	};
 }
 
-pub struct JsonPrecompile(BTreeMap<H160, PrecompileFn>);
+pub struct JsonPrecompile;
 
 impl JsonPrecompile {
-	pub fn precompile(spec: &ForkSpec) {
-		let mut map = PRECOMPILE_LIST.lock().unwrap();
+	pub fn precompile(spec: &ForkSpec) -> Option<BTreeMap<H160, PrecompileFn>> {
 		match spec {
 			ForkSpec::Istanbul => {
+				let mut map = BTreeMap::new();
 				precompile_entry!(map, ISTANBUL_BUILTINS, 1);
 				precompile_entry!(map, ISTANBUL_BUILTINS, 2);
 				precompile_entry!(map, ISTANBUL_BUILTINS, 3);
@@ -113,8 +140,10 @@ impl JsonPrecompile {
 				precompile_entry!(map, ISTANBUL_BUILTINS, 7);
 				precompile_entry!(map, ISTANBUL_BUILTINS, 8);
 				precompile_entry!(map, ISTANBUL_BUILTINS, 9);
+				Some(map)
 			}
 			ForkSpec::Berlin => {
+				let mut map = BTreeMap::new();
 				precompile_entry!(map, BERLIN_BUILTINS, 1);
 				precompile_entry!(map, BERLIN_BUILTINS, 2);
 				precompile_entry!(map, BERLIN_BUILTINS, 3);
@@ -124,10 +153,11 @@ impl JsonPrecompile {
 				precompile_entry!(map, BERLIN_BUILTINS, 7);
 				precompile_entry!(map, BERLIN_BUILTINS, 8);
 				precompile_entry!(map, BERLIN_BUILTINS, 9);
+				Some(map)
 			}
 			// precompiles for London and Berlin are the same
 			ForkSpec::London => Self::precompile(&ForkSpec::Berlin),
-			_ => {}
+			_ => None,
 		}
 	}
 
@@ -146,29 +176,18 @@ impl JsonPrecompile {
 			.collect()
 	}
 
-	pub fn execute(
-		address: H160,
-		input: &[u8],
-		target_gas: Option<u64>,
-		context: &Context,
-	) -> Option<core::result::Result<PrecompileOutput, ExitError>> {
-		let map = PRECOMPILE_LIST.lock().unwrap();
-		if let Some(x) = map.get(&address) {
-			return x(address, input, target_gas, context);
-		}
-		None
-	}
-
 	fn exec_as_precompile(
 		builtin: &ethcore_builtin::Builtin,
 		input: &[u8],
 		gas_limit: Option<u64>,
-	) -> Result<PrecompileOutput, ExitError> {
+	) -> Result<PrecompileOutput, PrecompileFailure> {
 		let cost = builtin.cost(input, 0);
 
 		if let Some(target_gas) = gas_limit {
 			if cost > U256::from(u64::MAX) || target_gas < cost.as_u64() {
-				return Err(ExitError::OutOfGas);
+				return Err(PrecompileFailure::Error {
+					exit_status: ExitError::OutOfGas,
+				});
 			}
 		}
 
@@ -180,7 +199,9 @@ impl JsonPrecompile {
 				cost: cost.as_u64(),
 				logs: Vec::new(),
 			}),
-			Err(e) => Err(ExitError::Other(e.into())),
+			Err(e) => Err(PrecompileFailure::Error {
+				exit_status: ExitError::Other(e.into()),
+			}),
 		}
 	}
 }
@@ -203,9 +224,7 @@ pub fn test(name: &str, test: Test) {
 
 lazy_static! {
 	static ref SKIP_NAMES: Vec<&'static str> = vec![
-		"HighGasPrice",
 		"TestStoreGasPrices",
-		"modexp_modsize0_returndatasize",
 		"ABAcalls2",
 		"CallRecursiveBomb",
 		"Call1024",
@@ -287,12 +306,11 @@ fn test_run(name: &str, test: Test) {
 
 					let stack_state = SubstrateStackState::<Runtime>::new(&vicinity, metadata);
 
-					JsonPrecompile::precompile(spec);
-
-					let mut executor = StackExecutor::new_with_precompile(
+					let precompile = JsonPrecompile::precompile(spec).unwrap();
+					let mut executor = StackExecutor::new_with_precompiles(
 						stack_state,
 						&gasometer_config,
-						JsonPrecompile::execute,
+						&precompile,
 					);
 
 					let total_fee = (vicinity.gas_price * gas_limit).saturated_into::<i128>();
@@ -333,7 +351,18 @@ fn test_run(name: &str, test: Test) {
 					}
 
 					let actual_fee = executor.fee(vicinity.gas_price).saturated_into::<i128>();
-					deposit(vicinity.block_coinbase.unwrap(), actual_fee);
+					let miner_reward = if let ForkSpec::London = spec {
+						// see EIP-1559
+						let max_priority_fee_per_gas = test.0.transaction.max_priority_fee_per_gas();
+						let max_fee_per_gas = test.0.transaction.max_fee_per_gas();
+						let base_fee_per_gas = vicinity.block_base_fee_per_gas.unwrap_or_default();
+						let priority_fee_per_gas =
+							std::cmp::min(max_priority_fee_per_gas, max_fee_per_gas - base_fee_per_gas);
+						executor.fee(priority_fee_per_gas).saturated_into()
+					} else {
+						actual_fee
+					};
+					deposit(vicinity.block_coinbase.unwrap(), miner_reward);
 					println!("Gas used: {}", executor.used_gas());
 
 					let refund_fee = total_fee - actual_fee;
