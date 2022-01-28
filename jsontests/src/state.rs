@@ -365,8 +365,8 @@ fn test_run(name: &str, test: Test) {
 						let actual_state = get_state(&executor.into_state());
 						assert_states(expected_state, actual_state);
 					} else {
-						eprintln!("No post state found!");
-						// assert_valid_hash(&state.hash.0, &get_state(&executor.into_state()));
+						// No post state found, validate hashes
+						assert_valid_hash(&state.hash.0, &get_state(&executor.into_state()));
 					}
 
 					// clear
