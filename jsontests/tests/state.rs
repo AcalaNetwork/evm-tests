@@ -209,7 +209,6 @@ fn st_special() {
 // handlings. Those situations will never happen on a production chain (an empty
 // account with storage values), so we can safely ignore them.
 #[test]
-#[ignore]
 fn st_sstore() {
 	run("res/ethtests/GeneralStateTests/stSStoreTest")
 }

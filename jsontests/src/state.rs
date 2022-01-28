@@ -220,21 +220,8 @@ pub fn test(name: &str, test: Test) {
 
 lazy_static! {
 	static ref SKIP_NAMES: Vec<&'static str> = vec![
-		"Callcode1024OOG",
-		"Call1024OOG",
-		"Call1024PreCalls",
-		"Delegatecall1024OOG",
-		"storageCosts",
-		"TestStoreGasPrices",
-		"CallRecursiveBomb0",
-		"CallRecursiveBomb1",
-		"CallRecursiveBombLog",
-		"CallRecursiveBombLog2",
-		"CallRecursiveBomb2",
-		"CallRecursiveBomb3",
-		"CallRecursiveBomb0_OOG_atMaxCallDepth",
-		"ABAcalls2",
-		"ABAcalls3"
+		// we don't impl touch so target is treated as non-existent and used_gas will be higher
+		"randomStatetest650"
 	];
 }
 
@@ -245,11 +232,11 @@ fn test_run(name: &str, test: Test) {
 	for (spec, states) in &test.0.post_states {
 		new_test_ext().execute_with(|| {
 			let (gasometer_config, _delete_empty) = match spec {
-				// ethjson::spec::ForkSpec::Istanbul => (Config::istanbul(), true),
-				// ethjson::spec::ForkSpec::Berlin => (Config::berlin(), true),
+				ethjson::spec::ForkSpec::Istanbul => (Config::istanbul(), true),
+				ethjson::spec::ForkSpec::Berlin => (Config::berlin(), true),
 				ethjson::spec::ForkSpec::London => (Config::london(), true),
 				_spec => {
-					// println!("Skip spec {:?}", spec);
+					println!("Skip spec {:?}", spec);
 					return;
 				}
 			};
@@ -394,7 +381,10 @@ fn assert_states(a: BTreeMap<H160, MemoryAccount>, b: BTreeMap<H160, MemoryAccou
 			address
 		);
 		let b_account = maybe_b_account.unwrap();
-		// assert_eq!(a_account.balance, b_account.balance, "balance not eq for address {:?}", address);
+		// EVM+ can't handle balance greater than u128::MAX, skip balance validation
+		if a_account.balance <= U256::from(u128::MAX) {
+			assert_eq!(a_account.balance, b_account.balance, "balance not eq for address {:?}", address);
+		}
 		assert_eq!(
 			a_account.nonce, b_account.nonce,
 			"nonce not eq for address {:?}",
