@@ -1,10 +1,10 @@
-use crate::mock::{deposit, get_state, new_test_ext, setup_state, withdraw, Runtime};
+use crate::mock::{deposit, get_state, new_test_ext, setup_state, withdraw, Runtime, EVM};
 use crate::utils::*;
 use ethjson::spec::ForkSpec;
 use evm_utility::evm::{backend::MemoryAccount, Config, ExitError, ExitSucceed};
 use lazy_static::lazy_static;
 use module_evm::{
-	runner::state::{PrecompileFn, PrecompileOutput, PrecompileFailure},
+	runner::state::{PrecompileFn, PrecompileOutput, PrecompileFailure, StackState},
 	Context, StackExecutor, StackSubstateMetadata, SubstrateStackState, Vicinity,
 };
 use parity_crypto::publickey;
@@ -326,6 +326,10 @@ fn test_run(name: &str, test: Test) {
 						}
 					}
 
+					for address in executor.state().deleted_accounts() {
+						let _ = EVM::remove_contract(&H160::default(), &address);
+					}
+
 					let actual_fee = executor.fee(vicinity.gas_price).saturated_into::<i128>();
 					let miner_reward = if let ForkSpec::London = spec {
 						// see EIP-1559
@@ -338,8 +342,10 @@ fn test_run(name: &str, test: Test) {
 					} else {
 						actual_fee
 					};
-					deposit(vicinity.block_coinbase.unwrap(), miner_reward);
-					println!("Gas used: {}", executor.used_gas());
+
+					let miner = vicinity.block_coinbase.unwrap();
+					executor.state_mut().touch(miner);
+					deposit(miner, miner_reward);
 
 					let refund_fee = total_fee - actual_fee;
 					deposit(caller, refund_fee);
@@ -402,5 +408,5 @@ fn assert_states(a: BTreeMap<H160, MemoryAccount>, b: BTreeMap<H160, MemoryAccou
 		);
 		b.remove(&address);
 	});
-	// assert!(b.is_empty(), "unexpected state {:?}", b);
+	assert!(b.is_empty(), "unexpected state {:?}", b);
 }

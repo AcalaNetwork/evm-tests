@@ -162,7 +162,7 @@ impl FindAuthor<AccountId> for AuthorGiven {
 	where
 		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
 	{
-		Some(<Runtime as module_evm::Config>::AddressMapping::get_account_id(&find_author()))
+		Some(<Runtime as module_evm::Config>::AddressMapping::get_account_id(&H160::default()))
 	}
 }
 
@@ -250,11 +250,11 @@ pub fn deposit(who: H160, amount: Amount) {
 	assert_ok!(AdaptedBasicCurrency::update_balance(&account_id, amount));
 }
 
-pub fn setup_state(s: BTreeMap<H160, MemoryAccount>, block_number: u64, timestamp: u64) {
+pub fn setup_state(state: BTreeMap<H160, MemoryAccount>, block_number: u64, timestamp: u64) {
 	pallet_timestamp::Now::<Runtime>::put(timestamp * 1000);
 	System::set_block_number(block_number);
 
-	s.into_iter().for_each(|(address, value)| {
+	state.into_iter().for_each(|(address, value)| {
 		let code_hash = module_evm::code_hash(value.code.as_slice());
 		let code_size = value.code.len() as u32;
 		let contract_info = if code_size > 0 {
@@ -304,11 +304,11 @@ pub fn setup_state(s: BTreeMap<H160, MemoryAccount>, block_number: u64, timestam
 	});
 }
 
-pub fn get_state(s: &SubstrateStackState<Runtime>) -> BTreeMap<H160, MemoryAccount> {
+pub fn get_state(substate: &SubstrateStackState<Runtime>) -> BTreeMap<H160, MemoryAccount> {
 	let mut state: BTreeMap<H160, MemoryAccount> = BTreeMap::new();
 	module_evm::Accounts::<Runtime>::iter().for_each(|(address, account)| {
 		let acc = <Runtime as module_evm::Config>::AddressMapping::get_account_id(&address);
-		if s.deleted(address) {
+		if substate.deleted(address) {
 			return;
 		}
 
@@ -375,7 +375,7 @@ pub fn get_state(s: &SubstrateStackState<Runtime>) -> BTreeMap<H160, MemoryAccou
 		if state.contains_key(&address) {
 			return;
 		}
-		if s.deleted(address) {
+		if substate.deleted(address) {
 			return;
 		}
 
@@ -404,9 +404,15 @@ pub fn get_state(s: &SubstrateStackState<Runtime>) -> BTreeMap<H160, MemoryAccou
 		);
 	});
 
-	state
-}
+	// remove touched empty accounts
+	substate.metadata()
+		.dirty_accounts
+		.borrow()
+		.iter()
+		.filter(|x| substate.is_empty(**x))
+		.for_each(|x| {
+			state.remove(x);
+		});
 
-pub fn find_author() -> H160 {
-	H160::from_str("0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba").unwrap()
+	state
 }
