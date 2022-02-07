@@ -406,14 +406,9 @@ pub fn get_state(substate: &SubstrateStackState<Runtime>) -> BTreeMap<H160, Memo
 	});
 
 	// remove touched empty accounts
-	substate.metadata()
-		.dirty_accounts
-		.borrow()
-		.iter()
-		.filter(|x| substate.is_empty(**x))
-		.for_each(|x| {
-			state.remove(x);
-		});
+	for address in substate.empty_accounts() {
+		state.remove(&address);
+	}
 
 	state
 }
