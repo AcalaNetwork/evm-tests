@@ -276,15 +276,18 @@ pub fn setup_state(state: BTreeMap<H160, MemoryAccount>, block_number: u64, time
 		);
 
 		if code_size > 0 {
-			module_evm::CodeInfos::<Runtime>::insert(
-				code_hash,
-				module_evm::CodeInfo {
-					code_size,
-					ref_count: 1,
-				},
-			);
 			let bounded_code: BoundedVec<u8, MaxCodeSize> = value.code.try_into().unwrap();
-			module_evm::Codes::<Runtime>::insert(code_hash, bounded_code);
+			module_evm::CodeInfos::<Runtime>::mutate(code_hash, |maybe_code_info| {
+				if let Some(mut code_info) = maybe_code_info.as_mut() {
+					code_info.ref_count += 1;
+				} else {
+					*maybe_code_info = Some(module_evm::CodeInfo {
+						code_size,
+						ref_count: 1,
+					});
+					module_evm::Codes::<Runtime>::insert(code_hash, bounded_code);
+				}
+			});
 		}
 		value.storage.into_iter().for_each(|(index, value)| {
 			module_evm::AccountStorages::<Runtime>::insert(&address, index, value);
