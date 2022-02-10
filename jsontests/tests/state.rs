@@ -77,7 +77,6 @@ fn st_code_size_limit() {
 	run("res/ethtests/GeneralStateTests/stCodeSizeLimit")
 }
 #[test]
-#[ignore]
 fn st_create2() {
 	run("res/ethtests/GeneralStateTests/stCreate2")
 }
