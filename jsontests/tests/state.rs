@@ -145,17 +145,14 @@ fn st_non_zero_calls() {
 	run("res/ethtests/GeneralStateTests/stNonZeroCallsTest")
 }
 #[test]
-#[ignore]
 fn st_precompiled_contracts() {
 	run("res/ethtests/GeneralStateTests/stPreCompiledContracts")
 }
 #[test]
-#[ignore]
 fn st_precompiled_contracts2() {
 	run("res/ethtests/GeneralStateTests/stPreCompiledContracts2")
 }
 #[test]
-#[ignore]
 fn st_quadratic_complexity() {
 	run("res/ethtests/GeneralStateTests/stQuadraticComplexityTest")
 }
@@ -180,7 +177,6 @@ fn st_return_data() {
 	run("res/ethtests/GeneralStateTests/stReturnDataTest")
 }
 #[test]
-#[ignore]
 fn st_revert() {
 	run("res/ethtests/GeneralStateTests/stRevertTest")
 }
@@ -204,9 +200,6 @@ fn st_solidity() {
 fn st_special() {
 	run("res/ethtests/GeneralStateTests/stSpecialTest")
 }
-// Some of the collison test in sstore conflicts with evm's internal
-// handlings. Those situations will never happen on a production chain (an empty
-// account with storage values), so we can safely ignore them.
 #[test]
 fn st_sstore() {
 	run("res/ethtests/GeneralStateTests/stSStoreTest")
@@ -216,7 +209,6 @@ fn st_stack() {
 	run("res/ethtests/GeneralStateTests/stStackTests")
 }
 #[test]
-#[ignore]
 fn st_static_call() {
 	run("res/ethtests/GeneralStateTests/stStaticCall")
 }
