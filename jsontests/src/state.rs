@@ -224,10 +224,6 @@ lazy_static! {
 		"Create2Recursive",
 		"static_Call50000_ecrec",
 		"Call50000_ecrec",
-		// touching addresses not the same as ethereum
-		"failed_tx_xcf416c53",
-		"RevertPrecompiledTouch",
-		"RevertPrecompiledTouch_storage",
 	];
 }
 
