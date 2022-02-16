@@ -220,14 +220,14 @@ pub fn test(name: &str, test: Test) {
 
 lazy_static! {
 	static ref SKIP_NAMES: Vec<&'static str> = vec![
-		// balance U256::MAX, no post state available
+		// balance overflow
 		"Create2Recursive",
-		// investigating
-		"RevertPrecompiledTouch_storage",
-		"RevertPrecompiledTouchExactOOG",
-		"RevertPrecompiledTouch",
 		"static_Call50000_ecrec",
 		"Call50000_ecrec",
+		// touching addresses not the same as ethereum
+		"RevertPrecompiledTouch",
+		"RevertPrecompiledTouch_storage",
+		"RevertPrecompiledTouchExactOOG",
 	];
 }
 
