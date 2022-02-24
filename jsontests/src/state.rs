@@ -1,11 +1,12 @@
 use crate::mock::{deposit, get_state, new_test_ext, setup_state, withdraw, Runtime, EVM};
 use crate::utils::*;
 use ethjson::spec::ForkSpec;
-use evm_utility::evm::{backend::MemoryAccount, Config, ExitError, ExitSucceed};
+use evm_utility::evm::{backend::MemoryAccount, Config};
 use lazy_static::lazy_static;
 use module_evm::{
-	runner::state::{PrecompileFn, PrecompileOutput, PrecompileFailure, StackState},
-	Context, StackExecutor, StackSubstateMetadata, SubstrateStackState, Vicinity,
+	precompiles::{ECRecover, Sha256, Ripemd160, Identity, IstanbulModexp, Modexp, Bn128Add, Bn128Mul, Bn128Pairing, Blake2F, Precompile},
+	runner::state::{PrecompileFn, StackState},
+	StackExecutor, StackSubstateMetadata, SubstrateStackState, Vicinity,
 };
 use parity_crypto::publickey;
 use primitive_types::{H160, H256, U256};
@@ -13,8 +14,6 @@ use primitives::convert_decimals_to_evm;
 use serde::Deserialize;
 use sp_runtime::SaturatedConversion;
 use std::collections::BTreeMap;
-use std::convert::TryInto;
-use std::sync::Mutex;
 
 #[derive(Deserialize, Debug)]
 pub struct Test(ethjson::test_helpers::state::State);
@@ -90,114 +89,32 @@ impl Test {
 	}
 }
 
-lazy_static! {
-	static ref ISTANBUL_BUILTINS: BTreeMap<H160, ethcore_builtin::Builtin> =
-		JsonPrecompile::builtins("./res/istanbul_builtins.json");
-}
-
-lazy_static! {
-	static ref BERLIN_BUILTINS: BTreeMap<H160, ethcore_builtin::Builtin> =
-		JsonPrecompile::builtins("./res/berlin_builtins.json");
-}
-
-lazy_static! {
-	static ref PRECOMPILE_LIST: Mutex<BTreeMap<H160, PrecompileFn>> = Mutex::new(BTreeMap::new());
-}
-
-macro_rules! precompile_entry {
-	($map:expr, $builtins:expr, $index:expr) => {
-		let x: fn(
-			&[u8],
-			Option<u64>,
-			&Context,
-			bool,
-		) -> Result<PrecompileOutput, PrecompileFailure> =
-			|input: &[u8], gas_limit: Option<u64>, _context: &Context, _is_static: bool| {
-				let builtin = $builtins.get(&H160::from_low_u64_be($index)).unwrap();
-				Self::exec_as_precompile(builtin, input, gas_limit)
-			};
-		$map.insert(H160::from_low_u64_be($index), x);
-	};
-}
-
 pub struct JsonPrecompile;
 
 impl JsonPrecompile {
 	pub fn precompile(spec: &ForkSpec) -> Option<BTreeMap<H160, PrecompileFn>> {
 		match spec {
 			ForkSpec::Istanbul => {
-				let mut map = BTreeMap::new();
-				precompile_entry!(map, ISTANBUL_BUILTINS, 1);
-				precompile_entry!(map, ISTANBUL_BUILTINS, 2);
-				precompile_entry!(map, ISTANBUL_BUILTINS, 3);
-				precompile_entry!(map, ISTANBUL_BUILTINS, 4);
-				precompile_entry!(map, ISTANBUL_BUILTINS, 5);
-				precompile_entry!(map, ISTANBUL_BUILTINS, 6);
-				precompile_entry!(map, ISTANBUL_BUILTINS, 7);
-				precompile_entry!(map, ISTANBUL_BUILTINS, 8);
-				precompile_entry!(map, ISTANBUL_BUILTINS, 9);
+				let mut map = BTreeMap::<H160, PrecompileFn>::new();
+				map.insert(H160::from_low_u64_be(1), <ECRecover as Precompile>::execute);
+				map.insert(H160::from_low_u64_be(2), <Sha256 as Precompile>::execute);
+				map.insert(H160::from_low_u64_be(3), <Ripemd160 as Precompile>::execute);
+				map.insert(H160::from_low_u64_be(4), <Identity as Precompile>::execute);
+				map.insert(H160::from_low_u64_be(5), IstanbulModexp::execute);
+				map.insert(H160::from_low_u64_be(6), Bn128Add::execute);
+				map.insert(H160::from_low_u64_be(7), Bn128Mul::execute);
+				map.insert(H160::from_low_u64_be(8), Bn128Pairing::execute);
+				map.insert(H160::from_low_u64_be(9), Blake2F::execute);
 				Some(map)
 			}
 			ForkSpec::Berlin => {
-				let mut map = BTreeMap::new();
-				precompile_entry!(map, BERLIN_BUILTINS, 1);
-				precompile_entry!(map, BERLIN_BUILTINS, 2);
-				precompile_entry!(map, BERLIN_BUILTINS, 3);
-				precompile_entry!(map, BERLIN_BUILTINS, 4);
-				precompile_entry!(map, BERLIN_BUILTINS, 5);
-				precompile_entry!(map, BERLIN_BUILTINS, 6);
-				precompile_entry!(map, BERLIN_BUILTINS, 7);
-				precompile_entry!(map, BERLIN_BUILTINS, 8);
-				precompile_entry!(map, BERLIN_BUILTINS, 9);
+				let mut map = Self::precompile(&ForkSpec::Istanbul).unwrap();
+				map.insert(H160::from_low_u64_be(5), Modexp::execute);
 				Some(map)
 			}
 			// precompiles for London and Berlin are the same
 			ForkSpec::London => Self::precompile(&ForkSpec::Berlin),
 			_ => None,
-		}
-	}
-
-	fn builtins(spec_path: &str) -> BTreeMap<H160, ethcore_builtin::Builtin> {
-		let reader = std::fs::File::open(spec_path).unwrap();
-		let builtins: BTreeMap<ethjson::hash::Address, ethjson::spec::builtin::BuiltinCompat> =
-			serde_json::from_reader(reader).unwrap();
-		builtins
-			.into_iter()
-			.map(|(address, builtin)| {
-				(
-					address.into(),
-					ethjson::spec::Builtin::from(builtin).try_into().unwrap(),
-				)
-			})
-			.collect()
-	}
-
-	fn exec_as_precompile(
-		builtin: &ethcore_builtin::Builtin,
-		input: &[u8],
-		gas_limit: Option<u64>,
-	) -> Result<PrecompileOutput, PrecompileFailure> {
-		let cost = builtin.cost(input, 0);
-
-		if let Some(target_gas) = gas_limit {
-			if cost > U256::from(u64::MAX) || target_gas < cost.as_u64() {
-				return Err(PrecompileFailure::Error {
-					exit_status: ExitError::OutOfGas,
-				});
-			}
-		}
-
-		let mut output = Vec::new();
-		match builtin.execute(input, &mut parity_bytes::BytesRef::Flexible(&mut output)) {
-			Ok(()) => Ok(PrecompileOutput {
-				exit_status: ExitSucceed::Stopped,
-				output,
-				cost: cost.as_u64(),
-				logs: Vec::new(),
-			}),
-			Err(e) => Err(PrecompileFailure::Error {
-				exit_status: ExitError::Other(e.into()),
-			}),
 		}
 	}
 }
