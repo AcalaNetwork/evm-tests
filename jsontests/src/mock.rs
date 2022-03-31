@@ -131,13 +131,26 @@ define_combined_task! {
 
 parameter_types!(
 	pub MinimumWeightRemainInBlock: Weight = u64::MIN;
+	pub DisableBlockThreshold: BlockNumber = u32::MAX;
 );
+
+pub struct MockBlockNumberProvider;
+
+impl BlockNumberProvider for MockBlockNumberProvider {
+	type BlockNumber = u32;
+
+	fn current_block_number() -> Self::BlockNumber {
+		Zero::zero()
+	}
+}
 
 impl module_idle_scheduler::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
 	type Task = ScheduledTasks;
 	type MinimumWeightRemainInBlock = MinimumWeightRemainInBlock;
+	type DisableBlockThreshold = DisableBlockThreshold;
+	type RelayChainBlockNumberProvider = MockBlockNumberProvider;
 }
 
 impl module_evm_accounts::Config for Runtime {
