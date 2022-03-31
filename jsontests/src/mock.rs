@@ -22,7 +22,7 @@ use scale_info::TypeInfo;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, Convert, IdentityLookup},
+	traits::{BlakeTwo256, BlockNumberProvider, Convert, IdentityLookup, Zero},
 	AccountId32, SaturatedConversion,
 };
 use std::convert::TryInto;
