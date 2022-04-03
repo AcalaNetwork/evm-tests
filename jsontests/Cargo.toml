@@ -34,7 +34,7 @@ serde_json = "1.0"
 hex = "0.4"
 clap = "3.1"
 ethjson = { path = "../ethjson", features = ["test-helpers"] }
-parity-crypto = { version = "0.9", features = ["publickey"] }
+libsecp256k1 = "0.7"
 triehash-ethereum = { path = "../triehash-ethereum" }
 rlp = "0.5"
 sha3 = "0.10.0"
