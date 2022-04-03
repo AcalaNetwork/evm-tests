@@ -1,6 +1,6 @@
 use evm_utility::evm::backend::MemoryAccount;
-use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
+use sp_core::{H160, H256, U256};
 use std::collections::BTreeMap;
 
 pub fn u256_to_h256(u: U256) -> H256 {
@@ -165,7 +165,7 @@ pub mod transaction {
 	use ethjson::transaction::Transaction;
 	use ethjson::uint::Uint;
 	use evm_utility::evm::gasometer::{self, Gasometer};
-	use primitive_types::{H160, H256, U256};
+	use sp_core::{H160, H256, U256};
 
 	pub fn validate(
 		tx: Transaction,

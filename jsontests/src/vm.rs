@@ -3,8 +3,8 @@ use crate::utils::*;
 use evm_utility::evm::backend::MemoryAccount;
 use evm_utility::evm::Config;
 use module_evm::{StackExecutor, StackSubstateMetadata, SubstrateStackState, Vicinity};
-use primitive_types::H160;
 use serde::Deserialize;
+use sp_core::H160;
 use std::collections::BTreeMap;
 use std::rc::Rc;
 

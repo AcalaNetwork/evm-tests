@@ -8,17 +8,17 @@ use frame_support::{
 };
 use frame_system::{AccountInfo, EnsureSignedBy};
 use module_evm::{
-	runner::state::StackState,
-	convert_decimals_to_evm, ContractInfo, EvmTask, MaxCodeSize, SubstrateStackState,
+	convert_decimals_to_evm, runner::state::StackState, ContractInfo, EvmTask, MaxCodeSize,
+	SubstrateStackState,
 };
-use module_support::{DispatchableTask, AddressMapping};
+use module_support::{AddressMapping, DispatchableTask};
 use orml_traits::{parameter_type_with_key, BasicCurrencyExtended};
-use primitive_types::{H160, H256, U256};
 use primitives::{
 	define_combined_task, task::TaskResult, Amount, BlockNumber, CurrencyId, ReserveIdentifier,
 	TokenSymbol,
 };
 use scale_info::TypeInfo;
+use sp_core::{H160, H256, U256};
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::{
 	testing::Header,
@@ -374,8 +374,11 @@ pub fn get_state(substate: &SubstrateStackState<Runtime>) -> BTreeMap<H160, Memo
 	});
 
 	frame_system::Account::<Runtime>::iter().for_each(|(acc, data)| {
-		if acc == TreasuryAccount::get() { return; } // skip treasury
-		let address = <Runtime as module_evm::Config>::AddressMapping::get_or_create_evm_address(&acc);
+		if acc == TreasuryAccount::get() {
+			return;
+		} // skip treasury
+		let address =
+			<Runtime as module_evm::Config>::AddressMapping::get_or_create_evm_address(&acc);
 		if state.contains_key(&address) {
 			return;
 		}

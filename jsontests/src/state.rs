@@ -4,14 +4,17 @@ use ethjson::spec::ForkSpec;
 use evm_utility::evm::{backend::MemoryAccount, Config};
 use lazy_static::lazy_static;
 use module_evm::{
-	precompiles::{ECRecover, Sha256, Ripemd160, Identity, IstanbulModexp, Modexp, Bn128Add, Bn128Mul, Bn128Pairing, Blake2F, Precompile},
+	precompiles::{
+		Blake2F, Bn128Add, Bn128Mul, Bn128Pairing, ECRecover, Identity, IstanbulModexp, Modexp,
+		Precompile, Ripemd160, Sha256,
+	},
 	runner::state::{PrecompileFn, StackState},
 	StackExecutor, StackSubstateMetadata, SubstrateStackState, Vicinity,
 };
 use parity_crypto::publickey;
-use primitive_types::{H160, H256, U256};
 use primitives::convert_decimals_to_evm;
 use serde::Deserialize;
+use sp_core::{H160, H256, U256};
 use sp_runtime::SaturatedConversion;
 use std::collections::BTreeMap;
 
@@ -33,9 +36,7 @@ impl Test {
 			.unwrap()
 			.public()
 			.clone();
-		let sender = publickey::public_to_address(&public);
-
-		sender
+		H160::from_slice(publickey::public_to_address(&public).as_bytes())
 	}
 
 	pub fn unwrap_to_vicinity(&self, spec: &ForkSpec) -> Option<Vicinity> {
@@ -146,7 +147,9 @@ lazy_static! {
 
 fn test_run(name: &str, test: Test) {
 	// skip those tests until fixed
-	if SKIP_NAMES.contains(&name) { return; }
+	if SKIP_NAMES.contains(&name) {
+		return;
+	}
 
 	for (spec, states) in &test.0.post_states {
 		new_test_ext().execute_with(|| {
@@ -252,11 +255,14 @@ fn test_run(name: &str, test: Test) {
 					let actual_fee = executor.fee(vicinity.gas_price).saturated_into::<i128>();
 					let miner_reward = if let ForkSpec::London = spec {
 						// see EIP-1559
-						let max_priority_fee_per_gas = test.0.transaction.max_priority_fee_per_gas();
+						let max_priority_fee_per_gas =
+							test.0.transaction.max_priority_fee_per_gas();
 						let max_fee_per_gas = test.0.transaction.max_fee_per_gas();
 						let base_fee_per_gas = vicinity.block_base_fee_per_gas.unwrap_or_default();
-						let priority_fee_per_gas =
-							std::cmp::min(max_priority_fee_per_gas, max_fee_per_gas - base_fee_per_gas);
+						let priority_fee_per_gas = std::cmp::min(
+							max_priority_fee_per_gas,
+							max_fee_per_gas - base_fee_per_gas,
+						);
 						executor.fee(priority_fee_per_gas).saturated_into()
 					} else {
 						actual_fee
@@ -308,7 +314,11 @@ fn assert_states(a: BTreeMap<H160, MemoryAccount>, b: BTreeMap<H160, MemoryAccou
 		let b_account = maybe_b_account.unwrap();
 		// EVM+ can't handle balance greater than u128::MAX, skip balance validation
 		if a_account.balance <= U256::from(u128::MAX) {
-			assert_eq!(a_account.balance, b_account.balance, "balance not eq for address {:?}", address);
+			assert_eq!(
+				a_account.balance, b_account.balance,
+				"balance not eq for address {:?}",
+				address
+			);
 		}
 		assert_eq!(
 			a_account.nonce, b_account.nonce,
