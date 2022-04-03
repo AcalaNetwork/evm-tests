@@ -37,7 +37,6 @@ clap = "3.1"
 ethjson = { path = "../ethjson", features = ["test-helpers"] }
 parity-crypto = { version = "0.9", features = ["publickey"] }
 triehash-ethereum = { path = "../triehash-ethereum" }
-ethcore-builtin = { path = "../ethcore-builtin" }
 rlp = "0.5"
 sha3 = "0.10.0"
 parity-bytes = "0.1"
