@@ -239,7 +239,7 @@ construct_runtime!(
 		EVMAccounts: module_evm_accounts::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Currencies: orml_currencies::{Pallet, Call, Event<T>},
+		Currencies: orml_currencies::{Pallet, Call},
 		IdleScheduler: module_idle_scheduler::{Pallet, Call, Storage, Event<T>},
 	}
 );
