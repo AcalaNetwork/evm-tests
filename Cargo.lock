@@ -14,7 +14,7 @@ dependencies = [
 
 [[package]]
 name = "acala-primitives"
-version = "2.6.0"
+version = "2.6.1"
 dependencies = [
  "bstringify",
  "enumflags2",
@@ -1997,7 +1997,7 @@ dependencies = [
 
 [[package]]
 name = "module-evm"
-version = "2.6.0"
+version = "2.6.1"
 dependencies = [
  "acala-primitives",
  "frame-support",
@@ -2030,7 +2030,7 @@ dependencies = [
 
 [[package]]
 name = "module-evm-accounts"
-version = "2.6.0"
+version = "2.6.1"
 dependencies = [
  "acala-primitives",
  "frame-support",
@@ -2050,7 +2050,7 @@ dependencies = [
 
 [[package]]
 name = "module-evm-utility"
-version = "2.6.0"
+version = "2.6.1"
 dependencies = [
  "ethereum",
  "evm",
@@ -2062,7 +2062,7 @@ dependencies = [
 
 [[package]]
 name = "module-evm-utility-macro"
-version = "2.6.0"
+version = "2.6.1"
 dependencies = [
  "module-evm-utility",
  "proc-macro2",
@@ -2072,7 +2072,7 @@ dependencies = [
 
 [[package]]
 name = "module-idle-scheduler"
-version = "2.6.0"
+version = "2.6.1"
 dependencies = [
  "acala-primitives",
  "frame-support",
@@ -2087,7 +2087,7 @@ dependencies = [
 
 [[package]]
 name = "module-support"
-version = "2.6.0"
+version = "2.6.1"
 dependencies = [
  "acala-primitives",
  "frame-support",

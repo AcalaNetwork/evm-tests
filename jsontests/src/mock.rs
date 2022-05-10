@@ -2,7 +2,7 @@ use codec::{Decode, Encode};
 use evm_utility::evm::backend::MemoryAccount;
 use frame_support::{
 	assert_ok, construct_runtime, ord_parameter_types, parameter_types,
-	traits::{Everything, FindAuthor, Nothing},
+	traits::{Everything, FindAuthor, GenesisBuild, Nothing},
 	weights::Weight,
 	BoundedVec, ConsensusEngineId, RuntimeDebug,
 };
@@ -157,7 +157,7 @@ impl module_idle_scheduler::Config for Runtime {
 impl module_evm_accounts::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type ChainId = ();
+	type ChainId = EVM;
 	type AddressMapping = module_evm_accounts::EvmAddressMapping<Runtime>;
 	type TransferAll = Currencies;
 	type WeightInfo = ();
@@ -194,7 +194,6 @@ ord_parameter_types! {
 	pub const TxFeePerGas: Balance = 20_000_000;
 	pub const DeveloperDeposit: Balance = 1000;
 	pub const PublicationFee: Balance = 200;
-	pub const ChainId: u64 = 1;
 }
 
 impl module_evm::Config for Runtime {
@@ -208,7 +207,6 @@ impl module_evm::Config for Runtime {
 	type Event = Event;
 	type PrecompilesType = ();
 	type PrecompilesValue = ();
-	type ChainId = ChainId;
 	type GasToWeight = GasToWeight;
 	type ChargeTransactionPayment = ();
 
@@ -235,21 +233,29 @@ construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		EVM: module_evm::{Pallet, Config<T>, Call, Storage, Event<T>},
-		EVMAccounts: module_evm_accounts::{Pallet, Call, Storage, Event<T>},
-		Tokens: orml_tokens::{Pallet, Storage, Event<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Currencies: orml_currencies::{Pallet, Call},
-		IdleScheduler: module_idle_scheduler::{Pallet, Call, Storage, Event<T>},
+		System: frame_system,
+		Timestamp: pallet_timestamp,
+		EVM: module_evm,
+		EVMAccounts: module_evm_accounts,
+		Tokens: orml_tokens,
+		Balances: pallet_balances,
+		Currencies: orml_currencies,
+		IdleScheduler: module_idle_scheduler,
 	}
 );
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let t = frame_system::GenesisConfig::default()
+	let mut t = frame_system::GenesisConfig::default()
 		.build_storage::<Runtime>()
 		.unwrap();
+
+	module_evm::GenesisConfig::<Runtime> {
+		chain_id: 1,
+		accounts: Default::default(),
+	}
+	.assimilate_storage(&mut t)
+	.unwrap();
+
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| System::set_block_number(1));
 	ext
