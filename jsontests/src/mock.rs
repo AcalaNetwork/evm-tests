@@ -8,8 +8,8 @@ use frame_support::{
 };
 use frame_system::{AccountInfo, EnsureSignedBy};
 use module_evm::{
-	convert_decimals_to_evm, runner::state::StackState, ContractInfo, EvmTask, MaxCodeSize,
-	SubstrateStackState,
+	convert_decimals_to_evm, runner::state::StackState, ContractInfo, EvmChainId, EvmTask,
+	MaxCodeSize, SubstrateStackState,
 };
 use module_support::{AddressMapping, DispatchableTask};
 use orml_traits::{parameter_type_with_key, BasicCurrencyExtended};
@@ -157,7 +157,7 @@ impl module_idle_scheduler::Config for Runtime {
 impl module_evm_accounts::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type ChainId = EVM;
+	type ChainId = EvmChainId<Runtime>;
 	type AddressMapping = module_evm_accounts::EvmAddressMapping<Runtime>;
 	type TransferAll = Currencies;
 	type WeightInfo = ();
