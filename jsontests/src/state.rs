@@ -3,6 +3,7 @@ use crate::utils::*;
 use ethjson::spec::ForkSpec;
 use evm_utility::evm::{backend::MemoryAccount, Config};
 use lazy_static::lazy_static;
+use libsecp256k1::SecretKey;
 use module_evm::{
 	precompiles::{
 		Blake2F, Bn128Add, Bn128Mul, Bn128Pairing, ECRecover, Identity, IstanbulModexp, Modexp,
@@ -11,10 +12,9 @@ use module_evm::{
 	runner::state::{PrecompileFn, StackState},
 	StackExecutor, StackSubstateMetadata, SubstrateStackState, Vicinity,
 };
-use libsecp256k1::SecretKey;
-use sha3::{Digest, Keccak256};
 use primitives::convert_decimals_to_evm;
 use serde::Deserialize;
+use sha3::{Digest, Keccak256};
 use sp_core::{H160, H256, U256};
 use sp_runtime::SaturatedConversion;
 use std::collections::BTreeMap;
