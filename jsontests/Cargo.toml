@@ -39,5 +39,5 @@ triehash-ethereum = { path = "../triehash-ethereum" }
 rlp = "0.5"
 sha3 = "0.10.0"
 parity-bytes = "0.1"
-env_logger = "0.8"
+env_logger = "0.9"
 lazy_static = "1.4.0"
