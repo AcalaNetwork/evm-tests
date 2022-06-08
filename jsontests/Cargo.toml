@@ -18,14 +18,14 @@ orml-traits = { path = "../../orml/traits" }
 orml-tokens = { path = "../../orml/tokens" }
 orml-currencies = { path = "../../orml/currencies" }
 primitives = { path = "../../primitives", package = "acala-primitives", features = ["evm-tests"] }
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
-frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
 
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
 scale-info = { version = "2.0.1", features = ["derive"] }
 codec = { package = "parity-scale-codec", version = "3.0.0" }
 
