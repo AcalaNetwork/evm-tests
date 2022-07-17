@@ -291,11 +291,17 @@ fn test_run(name: &str, test: Test) {
 					}
 
 					// clear
+					#[allow(deprecated)]
 					module_evm::Accounts::<Runtime>::remove_all(None);
+					#[allow(deprecated)]
 					module_evm::AccountStorages::<Runtime>::remove_all(None);
+					#[allow(deprecated)]
 					module_evm::Codes::<Runtime>::remove_all(None);
+					#[allow(deprecated)]
 					module_evm::CodeInfos::<Runtime>::remove_all(None);
+					#[allow(deprecated)]
 					module_evm::ContractStorageSizes::<Runtime>::remove_all(None);
+					#[allow(deprecated)]
 					frame_system::Account::<Runtime>::remove_all(None);
 				}
 
