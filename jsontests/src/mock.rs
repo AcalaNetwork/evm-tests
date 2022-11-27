@@ -41,8 +41,8 @@ impl frame_system::Config for Runtime {
 	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
-	type Origin = Origin;
-	type Call = Call;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
 	type Index = Nonce;
 	type BlockNumber = u64;
 	type Hash = H256;
@@ -50,7 +50,7 @@ impl frame_system::Config for Runtime {
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type DbWeight = ();
 	type Version = ();
@@ -71,7 +71,7 @@ parameter_types! {
 impl pallet_balances::Config for Runtime {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type MaxLocks = ();
@@ -97,13 +97,16 @@ parameter_type_with_key! {
 }
 
 impl orml_tokens::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
+	type OnSlash = ();
+	type OnDeposit = ();
+	type OnTransfer = ();
 	type MaxLocks = ();
 	type MaxReserves = ();
 	type ReserveIdentifier = ReserveIdentifier;
@@ -133,7 +136,7 @@ define_combined_task! {
 }
 
 parameter_types!(
-	pub MinimumWeightRemainInBlock: Weight = u64::MIN;
+	pub MinimumWeightRemainInBlock: Weight = Weight::zero();
 	pub DisableBlockThreshold: BlockNumber = u32::MAX;
 );
 
@@ -148,7 +151,7 @@ impl BlockNumberProvider for MockBlockNumberProvider {
 }
 
 impl module_idle_scheduler::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
 	type Task = ScheduledTasks;
 	type MinimumWeightRemainInBlock = MinimumWeightRemainInBlock;
@@ -157,7 +160,7 @@ impl module_idle_scheduler::Config for Runtime {
 }
 
 impl module_evm_accounts::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ChainId = EvmChainId<Runtime>;
 	type AddressMapping = module_evm_accounts::EvmAddressMapping<Runtime>;
@@ -167,9 +170,9 @@ impl module_evm_accounts::Config for Runtime {
 
 pub struct GasToWeight;
 
-impl Convert<u64, u64> for GasToWeight {
-	fn convert(a: u64) -> u64 {
-		a
+impl Convert<u64, Weight> for GasToWeight {
+	fn convert(a: u64) -> Weight {
+		Weight::from_ref_time(a)
 	}
 }
 
@@ -206,7 +209,7 @@ impl module_evm::Config for Runtime {
 	type StorageDepositPerByte = StorageDepositPerByte;
 	type TxFeePerGas = TxFeePerGas;
 
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type PrecompilesType = ();
 	type PrecompilesValue = ();
 	type GasToWeight = GasToWeight;
