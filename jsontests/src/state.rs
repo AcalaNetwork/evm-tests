@@ -31,15 +31,15 @@ impl Test {
 	}
 
 	pub fn unwrap_caller(&self) -> H160 {
-		let hash: H256 = self.0.transaction.secret.clone().unwrap().into();
+		let hash: H256 = self.0.transaction.secret.unwrap().into();
 		let mut secret_key = [0; 32];
-		secret_key.copy_from_slice(&hash.as_bytes()[..]);
+		secret_key.copy_from_slice(hash.as_bytes());
 		let secret = SecretKey::parse(&secret_key).unwrap();
 		let public = libsecp256k1::PublicKey::from_secret_key(&secret);
 		let mut res = [0u8; 64];
 		res.copy_from_slice(&public.serialize()[1..65]);
 
-		H160::from(H256::from_slice(Keccak256::digest(&res).as_slice()))
+		H160::from(H256::from_slice(Keccak256::digest(res).as_slice()))
 	}
 
 	pub fn unwrap_to_vicinity(&self, spec: &ForkSpec) -> Option<Vicinity> {
@@ -83,10 +83,10 @@ impl Test {
 			origin: self.unwrap_caller(),
 			// block_hashes: Vec::new(),
 			// block_number: self.0.env.number.clone().into(),
-			block_coinbase: Some(self.0.env.author.clone().into()),
+			block_coinbase: Some(self.0.env.author.into()),
 			// block_timestamp: self.0.env.timestamp.clone().into(),
-			block_difficulty: Some(self.0.env.difficulty.clone().into()),
-			block_gas_limit: Some(self.0.env.gas_limit.clone().into()),
+			block_difficulty: Some(self.0.env.difficulty.into()),
+			block_gas_limit: Some(self.0.env.gas_limit.into()),
 			// chain_id: U256::one(),
 			block_base_fee_per_gas: Some(block_base_fee_per_gas),
 		})

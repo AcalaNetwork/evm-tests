@@ -9,7 +9,7 @@ keywords = ["no_std", "ethereum"]
 edition = "2021"
 
 [dependencies]
-module-evm = { path = "../../modules/evm", features = ["with-ethereum-compatibility", "evm-tests"] }
+module-evm = { path = "../../modules/evm" }
 module-evm-accounts = { path = "../../modules/evm-accounts" }
 evm-utility = { path = "../../modules/evm-utility", package = "module-evm-utility" }
 module-support = { path = "../../modules/support" }
@@ -17,7 +17,7 @@ module-idle-scheduler  = { path = "../../modules/idle-scheduler" }
 orml-traits = { path = "../../orml/traits" }
 orml-tokens = { path = "../../orml/tokens" }
 orml-currencies = { path = "../../orml/currencies" }
-primitives = { path = "../../primitives", package = "acala-primitives", features = ["evm-tests"] }
+primitives = { path = "../../primitives", package = "acala-primitives" }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
@@ -41,3 +41,10 @@ parity-bytes = "0.1"
 env_logger = "0.9.0"
 lazy_static = "1.4.0"
 log = "0.4.17"
+
+[features]
+evm-tests = [
+    "module-evm/with-ethereum-compatibility",
+    "module-evm/evm-tests",
+    "primitives/evm-tests"
+]

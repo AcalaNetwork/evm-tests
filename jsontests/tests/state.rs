@@ -1,3 +1,5 @@
+#![cfg(feature = "evm-tests")]
+
 use evm_jsontests::state as statetests;
 use std::collections::HashMap;
 use std::fs::{self, File};
@@ -13,7 +15,7 @@ pub fn run(dir: &str) {
 	for entry in fs::read_dir(dest).unwrap() {
 		let entry = entry.unwrap();
 		if let Some(s) = entry.file_name().to_str() {
-			if s.starts_with(".") {
+			if s.starts_with('.') {
 				continue;
 			}
 		}

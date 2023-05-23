@@ -18,11 +18,11 @@ impl Test {
 
 	pub fn unwrap_to_vicinity(&self) -> Vicinity {
 		Vicinity {
-			gas_price: self.0.transaction.gas_price.clone().into(),
-			origin: self.0.transaction.origin.clone().into(),
-			block_gas_limit: Some(self.0.env.gas_limit.clone().into()),
-			block_difficulty: Some(self.0.env.difficulty.clone().into()),
-			block_coinbase: Some(self.0.env.author.clone().into()),
+			gas_price: self.0.transaction.gas_price.into(),
+			origin: self.0.transaction.origin.into(),
+			block_gas_limit: Some(self.0.env.gas_limit.into()),
+			block_difficulty: Some(self.0.env.difficulty.into()),
+			block_coinbase: Some(self.0.env.author.into()),
 			block_base_fee_per_gas: Some(self.0.env.block_base_fee_per_gas.0),
 		}
 	}
@@ -37,9 +37,9 @@ impl Test {
 
 	pub fn unwrap_to_context(&self) -> evm_utility::evm::Context {
 		evm_utility::evm::Context {
-			address: self.0.transaction.address.clone().into(),
-			caller: self.0.transaction.sender.clone().into(),
-			apparent_value: self.0.transaction.value.clone().into(),
+			address: self.0.transaction.address.into(),
+			caller: self.0.transaction.sender.into(),
+			apparent_value: self.0.transaction.value.into(),
 		}
 	}
 
@@ -48,11 +48,11 @@ impl Test {
 	}
 
 	pub fn unwrap_to_gas_limit(&self) -> u64 {
-		self.0.transaction.gas.clone().into()
+		self.0.transaction.gas.into()
 	}
 
 	pub fn unwrap_to_post_gas(&self) -> u64 {
-		self.0.gas_left.clone().unwrap().into()
+		self.0.gas_left.unwrap().into()
 	}
 }
 

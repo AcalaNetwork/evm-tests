@@ -130,7 +130,7 @@ impl MultiTransaction {
 			r: Default::default(),
 			s: Default::default(),
 			v: Default::default(),
-			secret: self.secret.clone(),
+			secret: self.secret,
 			access_list,
 		}
 	}

@@ -288,7 +288,7 @@ pub fn setup_state(state: BTreeMap<H160, MemoryAccount>, block_number: u64, time
 			None
 		};
 		module_evm::Accounts::<Runtime>::insert(
-			&address,
+			address,
 			module_evm::AccountInfo {
 				nonce: value.nonce.as_u64(),
 				contract_info,
@@ -310,7 +310,7 @@ pub fn setup_state(state: BTreeMap<H160, MemoryAccount>, block_number: u64, time
 			});
 		}
 		value.storage.into_iter().for_each(|(index, value)| {
-			module_evm::AccountStorages::<Runtime>::insert(&address, index, value);
+			module_evm::AccountStorages::<Runtime>::insert(address, index, value);
 		});
 
 		let account_id = <Runtime as module_evm::Config>::AddressMapping::get_account_id(&address);
@@ -337,7 +337,7 @@ pub fn get_state(substate: &SubstrateStackState<Runtime>) -> BTreeMap<H160, Memo
 		}
 
 		let account_info: AccountInfo<Nonce, pallet_balances::AccountData<Balance>> =
-			frame_system::Account::<Runtime>::get(&acc);
+			frame_system::Account::<Runtime>::get(acc);
 		if let Some(ContractInfo { code_hash, .. }) = account.contract_info {
 			let code = module_evm::Codes::<Runtime>::get(code_hash).to_vec();
 			let mut storage: BTreeMap<H256, H256> = BTreeMap::new();

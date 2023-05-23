@@ -1,3 +1,5 @@
+#![cfg(feature = "evm-tests")]
+
 use evm_jsontests::vm as vmtests;
 use std::collections::HashMap;
 use std::fs::{self, File};

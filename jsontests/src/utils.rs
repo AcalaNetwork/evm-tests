@@ -11,8 +11,8 @@ pub fn u256_to_h256(u: U256) -> H256 {
 
 pub fn unwrap_to_account(s: &ethjson::spec::Account) -> MemoryAccount {
 	MemoryAccount {
-		balance: s.balance.clone().unwrap().into(),
-		nonce: s.nonce.clone().unwrap().into(),
+		balance: s.balance.unwrap().into(),
+		nonce: s.nonce.unwrap().into(),
 		code: s.code.clone().unwrap().into(),
 		storage: s
 			.storage
@@ -24,10 +24,7 @@ pub fn unwrap_to_account(s: &ethjson::spec::Account) -> MemoryAccount {
 					// If value is zero then the key is not really there
 					None
 				} else {
-					Some((
-						u256_to_h256(k.clone().into()),
-						u256_to_h256(v.clone().into()),
-					))
+					Some((u256_to_h256((*k).into()), u256_to_h256((*v).into())))
 				}
 			})
 			.collect(),
@@ -38,7 +35,7 @@ pub fn unwrap_to_state(a: &ethjson::spec::State) -> BTreeMap<H160, MemoryAccount
 	match &a.0 {
 		ethjson::spec::HashOrMap::Map(m) => m
 			.iter()
-			.map(|(k, v)| (k.clone().into(), unwrap_to_account(v)))
+			.map(|(k, v)| ((*k).into(), unwrap_to_account(v)))
 			.collect(),
 		ethjson::spec::HashOrMap::Hash(_) => panic!("Hash can not be converted."),
 	}
@@ -110,12 +107,12 @@ pub fn assert_valid_state(a: &ethjson::spec::State, b: &BTreeMap<H160, MemoryAcc
 		ethjson::spec::HashOrMap::Map(m) => {
 			assert_eq!(
 				&m.iter()
-					.map(|(k, v)| { (k.clone().into(), unwrap_to_account(v)) })
+					.map(|(k, v)| { ((*k).into(), unwrap_to_account(v)) })
 					.collect::<BTreeMap<_, _>>(),
 				b
 			);
 		}
-		ethjson::spec::HashOrMap::Hash(h) => assert_valid_hash(&h.clone().into(), b),
+		ethjson::spec::HashOrMap::Hash(h) => assert_valid_hash(&(*h).into(), b),
 	}
 }
 
@@ -144,12 +141,11 @@ pub fn assert_valid_hash(h: &H256, b: &BTreeMap<H160, MemoryAccount>) {
 		.collect::<Vec<_>>();
 
 	let root = triehash_ethereum::sec_trie_root(tree);
-	let expect = h.clone().into();
 
-	if root != expect {
+	if root != *h {
 		panic!(
 			"Hash not equal; calculated: {:?}, expect: {:?}\nState: {:#x?}",
-			root, expect, b
+			root, *h, b
 		);
 	}
 }
@@ -157,7 +153,7 @@ pub fn assert_valid_hash(h: &H256, b: &BTreeMap<H160, MemoryAccount>) {
 pub fn flush() {
 	use std::io::{self, Write};
 
-	io::stdout().flush().ok().expect("Could not flush stdout");
+	io::stdout().flush().expect("Could not flush stdout");
 }
 
 pub mod transaction {
@@ -203,7 +199,7 @@ pub mod transaction {
 		let access_list: Vec<(H160, Vec<H256>)> = tx
 			.access_list
 			.iter()
-			.map(|(a, s)| (a.0, s.into_iter().map(|h| h.0).collect()))
+			.map(|(a, s)| (a.0, s.iter().map(|h| h.0).collect()))
 			.collect();
 
 		let cost = if is_contract_creation {
