@@ -65,7 +65,7 @@ impl frame_system::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: Balance = 0;
+	pub const ExistentialDeposit: Balance = 1;
 	pub const MaxReserves: u32 = 50;
 }
 impl pallet_balances::Config for Runtime {
@@ -73,11 +73,15 @@ impl pallet_balances::Config for Runtime {
 	type DustRemoval = ();
 	type RuntimeEvent = RuntimeEvent;
 	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
+	type AccountStore = module_support::SystemAccountStore<Runtime>;
 	type MaxLocks = ();
 	type MaxReserves = MaxReserves;
 	type ReserveIdentifier = ReserveIdentifier;
 	type WeightInfo = ();
+	type HoldIdentifier = ReserveIdentifier;
+	type FreezeIdentifier = ();
+	type MaxHolds = MaxReserves;
+	type MaxFreezes = ();
 }
 
 parameter_types! {
