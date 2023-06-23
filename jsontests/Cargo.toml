@@ -20,7 +20,7 @@ orml-currencies = { path = "../../orml/currencies" }
 primitives = { path = "../../primitives", package = "acala-primitives" }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", features = ["insecure_zero_ed"] }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }

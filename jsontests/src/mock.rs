@@ -65,7 +65,7 @@ impl frame_system::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: Balance = 1;
+	pub const ExistentialDeposit: Balance = 0;
 	pub const MaxReserves: u32 = 50;
 }
 impl pallet_balances::Config for Runtime {
@@ -276,6 +276,7 @@ pub fn deposit(who: H160, amount: Amount) {
 }
 
 pub fn setup_state(state: BTreeMap<H160, MemoryAccount>, block_number: u64, timestamp: u64) {
+	pallet_balances::TotalIssuance::<Runtime>::put(Balance::MAX);
 	pallet_timestamp::Now::<Runtime>::put(timestamp * 1000);
 	System::set_block_number(block_number);
 
