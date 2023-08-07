@@ -43,13 +43,12 @@ impl frame_system::Config for Runtime {
 	type BlockLength = ();
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
-	type Index = Nonce;
-	type BlockNumber = u64;
+	type Nonce = Nonce;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
+	type Block = Block;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type DbWeight = ();
@@ -144,7 +143,7 @@ pub struct MockBlockNumberProvider;
 impl BlockNumberProvider for MockBlockNumberProvider {
 	type BlockNumber = u32;
 
-	fn current_block_number() -> Self::BlockNumber {
+	fn current_block_number() -> BlockNumberFor<Self> {
 		Zero::zero()
 	}
 }
@@ -232,11 +231,7 @@ type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>
 type Block = frame_system::mocking::MockBlock<Runtime>;
 
 construct_runtime!(
-	pub enum Runtime where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
-	{
+	pub enum Runtime {
 		System: frame_system,
 		Timestamp: pallet_timestamp,
 		EVM: module_evm,
@@ -249,8 +244,8 @@ construct_runtime!(
 );
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = frame_system::GenesisConfig::default()
-		.build_storage::<Runtime>()
+	let mut t = frame_system::GenesisConfig::<Runtime>::default()
+		.build_storage()
 		.unwrap();
 
 	module_evm::GenesisConfig::<Runtime> {
