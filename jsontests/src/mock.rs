@@ -143,7 +143,7 @@ pub struct MockBlockNumberProvider;
 impl BlockNumberProvider for MockBlockNumberProvider {
 	type BlockNumber = u32;
 
-	fn current_block_number() -> BlockNumberFor<Self> {
+	fn current_block_number() -> Self::BlockNumber {
 		Zero::zero()
 	}
 }
