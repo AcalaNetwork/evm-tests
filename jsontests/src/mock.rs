@@ -21,9 +21,8 @@ use scale_info::TypeInfo;
 use sp_core::{H160, H256, U256};
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::{
-	BuildStorage,
 	traits::{BlakeTwo256, BlockNumberProvider, Convert, IdentityLookup, Zero},
-	AccountId32, SaturatedConversion,
+	AccountId32, BuildStorage, SaturatedConversion,
 };
 use std::convert::TryInto;
 use std::{collections::BTreeMap, str::FromStr};
