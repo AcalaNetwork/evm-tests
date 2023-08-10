@@ -2,7 +2,7 @@ use codec::{Decode, Encode};
 use evm_utility::evm::backend::MemoryAccount;
 use frame_support::{
 	assert_ok, construct_runtime, ord_parameter_types, parameter_types,
-	traits::{Everything, FindAuthor, GenesisBuild, Nothing},
+	traits::{Everything, FindAuthor, Nothing},
 	weights::Weight,
 	BoundedVec, ConsensusEngineId, RuntimeDebug,
 };
@@ -21,7 +21,7 @@ use scale_info::TypeInfo;
 use sp_core::{H160, H256, U256};
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::{
-	testing::Header,
+	BuildStorage,
 	traits::{BlakeTwo256, BlockNumberProvider, Convert, IdentityLookup, Zero},
 	AccountId32, SaturatedConversion,
 };
@@ -227,7 +227,6 @@ impl module_evm::Config for Runtime {
 	type WeightInfo = ();
 }
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 type Block = frame_system::mocking::MockBlock<Runtime>;
 
 construct_runtime!(
