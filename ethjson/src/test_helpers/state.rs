@@ -164,6 +164,9 @@ pub struct PostStateIndexes {
 /// State test indexed state result deserialization.
 #[derive(Debug, PartialEq, Deserialize)]
 pub struct PostStateResult {
+	/// Exception.
+	#[serde(rename = "expectException")]
+	pub expect_exception: Option<String>,
 	/// Post state hash
 	pub hash: H256,
 	/// Indexes

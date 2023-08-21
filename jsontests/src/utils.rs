@@ -219,4 +219,14 @@ pub mod transaction {
 		OutOfFund,
 		GasLimitReached,
 	}
+
+	impl std::fmt::Display for InvalidTxReason {
+		fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+			match self {
+				InvalidTxReason::IntrinsicGas => write!(f, "TR_IntrinsicGas"),
+				InvalidTxReason::OutOfFund => write!(f, "TR_NoFunds"),
+				InvalidTxReason::GasLimitReached => write!(f, "TR_GasLimitReached"),
+			}
+		}
+	}
 }

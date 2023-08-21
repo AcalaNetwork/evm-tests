@@ -54,7 +54,6 @@ fn vm_log() {
 	run("res/ethtests/LegacyTests/Constantinople/VMTests/vmLogTest");
 }
 #[test]
-#[ignore]
 fn vm_performance() {
 	run("res/ethtests/LegacyTests/Constantinople/VMTests/vmPerformance");
 }

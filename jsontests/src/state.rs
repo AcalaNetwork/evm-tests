@@ -187,122 +187,130 @@ fn test_run(name: &str, test: Test) {
 				let transaction = test.0.transaction.select(&state.indexes);
 
 				// Only execute valid transactions
-				if let Ok(transaction) = crate::utils::transaction::validate(
+				match crate::utils::transaction::validate(
 					transaction,
 					test.0.env.gas_limit.0,
 					caller_balance,
 					&gasometer_config,
 				) {
-					setup_state(
-						original_state.clone(),
-						test.0.env.number.0.as_u64(),
-						test.0.env.timestamp.0.as_u64(),
-					);
-
-					let gas_limit: u64 = transaction.gas_limit.into();
-					let data: Vec<u8> = transaction.data.into();
-
-					let metadata =
-						StackSubstateMetadata::new(gas_limit, 1_000_000, &gasometer_config);
-
-					let stack_state = SubstrateStackState::<Runtime>::new(&vicinity, metadata);
-
-					let precompile = JsonPrecompile::precompile(spec).unwrap();
-					let mut executor = StackExecutor::new_with_precompiles(
-						stack_state,
-						&gasometer_config,
-						&precompile,
-					);
-
-					let total_fee = (vicinity.gas_price * gas_limit).saturated_into::<i128>();
-					withdraw(caller, total_fee);
-
-					let access_list = transaction
-						.access_list
-						.into_iter()
-						.map(|(address, keys)| (address.0, keys.into_iter().map(|k| k.0).collect()))
-						.collect();
-
-					match transaction.to {
-						ethjson::maybe::MaybeEmpty::Some(to) => {
-							let data = data;
-							let value: U256 = transaction.value.into();
-
-							let _reason = executor.transact_call(
-								caller,
-								to.into(),
-								convert_decimals_to_evm(value.saturated_into::<u128>()).into(),
-								data,
-								gas_limit,
-								access_list,
-							);
-						}
-						ethjson::maybe::MaybeEmpty::None => {
-							let code = data;
-							let value: U256 = transaction.value.into();
-
-							let _reason = executor.transact_create(
-								caller,
-								convert_decimals_to_evm(value.saturated_into::<u128>()).into(),
-								code,
-								gas_limit,
-								access_list,
-							);
-						}
-					}
-
-					for address in executor.state().deleted_accounts() {
-						let _ = EVM::remove_contract(&H160::default(), &address);
-					}
-
-					let actual_fee = executor.fee(vicinity.gas_price).saturated_into::<i128>();
-					let miner_reward = if let ForkSpec::London = spec {
-						// see EIP-1559
-						let max_priority_fee_per_gas =
-							test.0.transaction.max_priority_fee_per_gas();
-						let max_fee_per_gas = test.0.transaction.max_fee_per_gas();
-						let base_fee_per_gas = vicinity.block_base_fee_per_gas.unwrap_or_default();
-						let priority_fee_per_gas = std::cmp::min(
-							max_priority_fee_per_gas,
-							max_fee_per_gas - base_fee_per_gas,
+					Ok(transaction) => {
+						setup_state(
+							original_state.clone(),
+							test.0.env.number.0.as_u64(),
+							test.0.env.timestamp.0.as_u64(),
 						);
-						executor.fee(priority_fee_per_gas).saturated_into()
-					} else {
-						actual_fee
-					};
 
-					let miner = vicinity.block_coinbase.unwrap();
-					executor.state_mut().touch(miner);
-					deposit(miner, miner_reward);
+						let gas_limit: u64 = transaction.gas_limit.into();
+						let data: Vec<u8> = transaction.data.into();
 
-					let refund_fee = total_fee - actual_fee;
-					deposit(caller, refund_fee);
+						let metadata =
+							StackSubstateMetadata::new(gas_limit, 1_000_000, &gasometer_config);
 
-					if let Some(post_state) = state.post_state.clone() {
-						let expected_state = post_state
+						let stack_state = SubstrateStackState::<Runtime>::new(&vicinity, metadata);
+
+						let precompile = JsonPrecompile::precompile(spec).unwrap();
+						let mut executor = StackExecutor::new_with_precompiles(
+							stack_state,
+							&gasometer_config,
+							&precompile,
+						);
+
+						let total_fee = (vicinity.gas_price * gas_limit).saturated_into::<i128>();
+						withdraw(caller, total_fee);
+
+						let access_list = transaction
+							.access_list
 							.into_iter()
-							.map(|(acc, data)| (acc.into(), unwrap_to_account(&data)))
-							.collect::<BTreeMap<H160, MemoryAccount>>();
-						let actual_state = get_state(&executor.into_state());
-						assert_states(expected_state, actual_state);
-					} else {
-						// No post state found, validate hashes
-						assert_valid_hash(&state.hash.0, &get_state(&executor.into_state()));
-					}
+							.map(|(address, keys)| {
+								(address.0, keys.into_iter().map(|k| k.0).collect())
+							})
+							.collect();
 
-					// clear
-					#[allow(deprecated)]
-					module_evm::Accounts::<Runtime>::remove_all(None);
-					#[allow(deprecated)]
-					module_evm::AccountStorages::<Runtime>::remove_all(None);
-					#[allow(deprecated)]
-					module_evm::Codes::<Runtime>::remove_all(None);
-					#[allow(deprecated)]
-					module_evm::CodeInfos::<Runtime>::remove_all(None);
-					#[allow(deprecated)]
-					module_evm::ContractStorageSizes::<Runtime>::remove_all(None);
-					#[allow(deprecated)]
-					frame_system::Account::<Runtime>::remove_all(None);
+						match transaction.to {
+							ethjson::maybe::MaybeEmpty::Some(to) => {
+								let data = data;
+								let value: U256 = transaction.value.into();
+
+								let _reason = executor.transact_call(
+									caller,
+									to.into(),
+									convert_decimals_to_evm(value.saturated_into::<u128>()).into(),
+									data,
+									gas_limit,
+									access_list,
+								);
+							}
+							ethjson::maybe::MaybeEmpty::None => {
+								let code = data;
+								let value: U256 = transaction.value.into();
+
+								let _reason = executor.transact_create(
+									caller,
+									convert_decimals_to_evm(value.saturated_into::<u128>()).into(),
+									code,
+									gas_limit,
+									access_list,
+								);
+							}
+						}
+
+						for address in executor.state().deleted_accounts() {
+							let _ = EVM::remove_contract(&H160::default(), &address);
+						}
+
+						let actual_fee = executor.fee(vicinity.gas_price).saturated_into::<i128>();
+						let miner_reward = if let ForkSpec::London = spec {
+							// see EIP-1559
+							let max_priority_fee_per_gas =
+								test.0.transaction.max_priority_fee_per_gas();
+							let max_fee_per_gas = test.0.transaction.max_fee_per_gas();
+							let base_fee_per_gas =
+								vicinity.block_base_fee_per_gas.unwrap_or_default();
+							let priority_fee_per_gas = std::cmp::min(
+								max_priority_fee_per_gas,
+								max_fee_per_gas - base_fee_per_gas,
+							);
+							executor.fee(priority_fee_per_gas).saturated_into()
+						} else {
+							actual_fee
+						};
+
+						let miner = vicinity.block_coinbase.unwrap();
+						executor.state_mut().touch(miner);
+						deposit(miner, miner_reward);
+
+						let refund_fee = total_fee - actual_fee;
+						deposit(caller, refund_fee);
+
+						if let Some(post_state) = state.post_state.clone() {
+							let expected_state = post_state
+								.into_iter()
+								.map(|(acc, data)| (acc.into(), unwrap_to_account(&data)))
+								.collect::<BTreeMap<H160, MemoryAccount>>();
+							let actual_state = get_state(&executor.into_state());
+							assert_states(expected_state, actual_state);
+						} else {
+							// No post state found, validate hashes
+							assert_valid_hash(&state.hash.0, &get_state(&executor.into_state()));
+						}
+
+						// clear
+						#[allow(deprecated)]
+						module_evm::Accounts::<Runtime>::remove_all(None);
+						#[allow(deprecated)]
+						module_evm::AccountStorages::<Runtime>::remove_all(None);
+						#[allow(deprecated)]
+						module_evm::Codes::<Runtime>::remove_all(None);
+						#[allow(deprecated)]
+						module_evm::CodeInfos::<Runtime>::remove_all(None);
+						#[allow(deprecated)]
+						module_evm::ContractStorageSizes::<Runtime>::remove_all(None);
+						#[allow(deprecated)]
+						frame_system::Account::<Runtime>::remove_all(None);
+					}
+					Err(e) => {
+						assert_eq!(state.expect_exception, Some(e.to_string()));
+					}
 				}
 
 				println!("passed");
