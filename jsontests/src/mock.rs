@@ -296,7 +296,7 @@ pub fn setup_state(state: BTreeMap<H160, MemoryAccount>, block_number: u64, time
 		if code_size > 0 {
 			let bounded_code: BoundedVec<u8, MaxCodeSize> = value.code.try_into().unwrap();
 			module_evm::CodeInfos::<Runtime>::mutate(code_hash, |maybe_code_info| {
-				if let Some(mut code_info) = maybe_code_info.as_mut() {
+				if let Some(code_info) = maybe_code_info.as_mut() {
 					code_info.ref_count += 1;
 				} else {
 					*maybe_code_info = Some(module_evm::CodeInfo {
