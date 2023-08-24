@@ -120,7 +120,7 @@ pub fn assert_valid_hash(h: &H256, b: &BTreeMap<H160, MemoryAccount>) {
 	let tree = b
 		.iter()
 		.map(|(address, account)| {
-			let storage_root = triehash_ethereum::sec_trie_root(
+			let storage_root = ethereum::util::sec_trie_root(
 				account
 					.storage
 					.iter()
@@ -140,7 +140,7 @@ pub fn assert_valid_hash(h: &H256, b: &BTreeMap<H160, MemoryAccount>) {
 		})
 		.collect::<Vec<_>>();
 
-	let root = triehash_ethereum::sec_trie_root(tree);
+	let root = ethereum::util::sec_trie_root(tree);
 
 	if root != *h {
 		panic!(

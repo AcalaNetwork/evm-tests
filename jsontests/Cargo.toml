@@ -9,6 +9,7 @@ keywords = ["no_std", "ethereum"]
 edition = "2021"
 
 [dependencies]
+ethereum = "^0.14"
 scale-info = { version = "^2.9", features = ["derive"] }
 codec = { package = "parity-scale-codec", version = "^3.0" }
 serde = { version = "^1.0", features = ["derive"] }
@@ -39,7 +40,6 @@ orml-traits = { path = "../../orml/traits" }
 orml-tokens = { path = "../../orml/tokens" }
 orml-currencies = { path = "../../orml/currencies" }
 primitives = { path = "../../primitives", package = "acala-primitives" }
-triehash-ethereum = { path = "../triehash-ethereum" }
 ethjson = { path = "../ethjson", features = ["test-helpers"] }
 
 [features]
