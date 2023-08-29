@@ -163,16 +163,17 @@ pub struct PostStateIndexes {
 
 /// State test indexed state result deserialization.
 #[derive(Debug, PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PostStateResult {
 	/// Exception.
-	#[serde(rename = "expectException")]
 	pub expect_exception: Option<String>,
+	/// Transaction bytes
+	pub txbytes: Bytes,
 	/// Post state hash
 	pub hash: H256,
 	/// Indexes
 	pub indexes: PostStateIndexes,
 	/// Post state.
-	#[serde(rename = "postState")]
 	pub post_state: Option<BTreeMap<Address, Account>>,
 }
 

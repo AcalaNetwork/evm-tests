@@ -1,10 +1,13 @@
 #![cfg(feature = "evm-tests")]
 
 use evm_jsontests::state as statetests;
-use std::collections::HashMap;
-use std::fs::{self, File};
-use std::io::BufReader;
-use std::path::PathBuf;
+use evm_jsontests::utils::should_skip_test;
+use std::{
+	collections::HashMap,
+	fs::{self, File},
+	io::BufReader,
+	path::PathBuf,
+};
 
 pub fn run(dir: &str) {
 	let _ = env_logger::try_init();
@@ -21,6 +24,11 @@ pub fn run(dir: &str) {
 		}
 
 		let path = entry.path();
+
+		if should_skip_test(&path) {
+			println!("Skipping test case {path:?}");
+			continue;
+		}
 
 		let file = File::open(path).expect("Open file failed");
 
@@ -213,6 +221,10 @@ fn st_stack() {
 #[test]
 fn st_static_call() {
 	run("res/ethtests/GeneralStateTests/stStaticCall")
+}
+#[test]
+fn st_static_flag_enabled() {
+	run("res/ethtests/GeneralStateTests/stStaticFlagEnabled")
 }
 #[test]
 fn st_system_operations() {

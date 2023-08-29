@@ -2,7 +2,6 @@ use crate::mock::{deposit, get_state, new_test_ext, setup_state, withdraw, Runti
 use crate::utils::*;
 use ethjson::spec::ForkSpec;
 use evm_utility::evm::{backend::MemoryAccount, Config};
-use lazy_static::lazy_static;
 use libsecp256k1::SecretKey;
 use module_evm::{
 	precompiles::{
@@ -123,6 +122,34 @@ impl JsonPrecompile {
 	}
 }
 
+/// Denotes the type of transaction.
+#[derive(Debug, PartialEq)]
+enum TxType {
+	/// All transactions before EIP-2718 are legacy.
+	Legacy,
+	/// https://eips.ethereum.org/EIPS/eip-2718
+	AccessList,
+	/// https://eips.ethereum.org/EIPS/eip-1559
+	DynamicFee,
+}
+
+impl TxType {
+	/// Whether this is a legacy, access list, dynamic fee, etc transaction
+	// Taken from geth's core/types/transaction.go/UnmarshalBinary, but we only detect the transaction
+	// type rather than unmarshal the entire payload.
+	fn from_txbytes(txbytes: &[u8]) -> Self {
+		match txbytes[0] {
+			b if b > 0x7f => Self::Legacy,
+			1 => Self::AccessList,
+			2 => Self::DynamicFee,
+			_ => panic!(
+				"Unknown tx type. \
+You may need to update the TxType enum if Ethereum introduced new enveloped transaction types."
+			),
+		}
+	}
+}
+
 pub fn test(name: &str, test: Test) {
 	use std::thread;
 
@@ -139,21 +166,7 @@ pub fn test(name: &str, test: Test) {
 	child.join().unwrap();
 }
 
-lazy_static! {
-	static ref SKIP_NAMES: Vec<&'static str> = vec![
-		// balance overflow
-		"Create2Recursive",
-		"static_Call50000_ecrec",
-		"Call50000_ecrec",
-	];
-}
-
 fn test_run(name: &str, test: Test) {
-	// skip those tests until fixed
-	if SKIP_NAMES.contains(&name) {
-		return;
-	}
-
 	for (spec, states) in &test.0.post_states {
 		new_test_ext().execute_with(|| {
 			let (gasometer_config, _delete_empty) = match spec {
@@ -185,6 +198,25 @@ fn test_run(name: &str, test: Test) {
 				flush();
 
 				let transaction = test.0.transaction.select(&state.indexes);
+
+				// Test case may be expected to fail with an unsupported tx type if the current fork is
+				// older than Berlin (see EIP-2718). However, this is not implemented in sputnik itself and rather
+				// in the code hosting sputnik. https://github.com/rust-blockchain/evm/pull/40
+				let tx_type = TxType::from_txbytes(&state.txbytes);
+				if matches!(
+					spec,
+					ForkSpec::EIP150
+						| ForkSpec::EIP158 | ForkSpec::Frontier
+						| ForkSpec::Homestead | ForkSpec::Byzantium
+						| ForkSpec::Constantinople
+						| ForkSpec::ConstantinopleFix
+						| ForkSpec::Istanbul
+				) && tx_type != TxType::Legacy
+					&& state.expect_exception == Some("TR_TypeNotSupported".to_string())
+				{
+					println!("Skip unsupported tx type {:?} for spec {:?}", tx_type, spec);
+					continue;
+				}
 
 				// Only execute valid transactions
 				match crate::utils::transaction::validate(

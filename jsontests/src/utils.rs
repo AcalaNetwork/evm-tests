@@ -1,7 +1,13 @@
 use evm_utility::evm::backend::MemoryAccount;
+use lazy_static::lazy_static;
 use sha3::{Digest, Keccak256};
 use sp_core::{H160, H256, U256};
-use std::collections::BTreeMap;
+use std::{
+	collections::BTreeMap,
+	fs::File,
+	io::{BufRead, BufReader},
+	path::Path,
+};
 
 pub fn u256_to_h256(u: U256) -> H256 {
 	let mut h = H256::default();
@@ -229,4 +235,36 @@ pub mod transaction {
 			}
 		}
 	}
+}
+
+pub fn should_skip_test(path: &Path) -> bool {
+	// read .ignorecases file as a list of test cases to skip
+	lazy_static! {
+		static ref SKIPPED_CASES: Vec<String> = BufReader::new(
+			File::open(format!(
+				"{}/tests/.ignoretests",
+				std::env::current_dir().unwrap().display()
+			))
+			.expect("open file")
+		)
+		.lines()
+		.map(|l| l.expect("parse line").trim().to_string())
+		.filter(|x| !x.is_empty() || x.starts_with('#') || x.starts_with("//"))
+		.collect::<Vec<_>>();
+	}
+
+	let matches = |case: &str| {
+		let file_stem = path.file_stem().unwrap();
+		let dir_path = path.parent().unwrap();
+		let dir_name = dir_path.file_name().unwrap();
+		Path::new(dir_name).join(file_stem) == Path::new(case)
+	};
+
+	for case in SKIPPED_CASES.iter() {
+		if matches(case) {
+			return true;
+		}
+	}
+
+	false
 }

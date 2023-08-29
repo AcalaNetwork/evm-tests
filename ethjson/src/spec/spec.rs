@@ -42,8 +42,13 @@ pub enum ForkSpec {
 	Istanbul,
 	/// Berlin (#12,244,000, 2021-04-15)
 	Berlin,
-	/// London (To be announced)
+	/// London (#12,965,000, 2021-08-05)
 	London,
+	/// Paris - The Merge (#15,537,394, 2022-09-15)
+	Merge,
+	/// Shanghai (#17,034,870, 2023-04-12)
+	Shanghai,
+
 	/// Byzantium transition test-net
 	EIP158ToByzantiumAt5,
 	/// Homestead transition test-net

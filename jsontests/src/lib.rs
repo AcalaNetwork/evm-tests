@@ -1,6 +1,6 @@
 #![cfg(feature = "evm-tests")]
 
-mod utils;
+pub mod utils;
 
 pub mod state;
 pub mod vm;
