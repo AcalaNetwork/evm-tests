@@ -211,21 +211,25 @@ mod tests {
 				"EIP150": [
 					{
 						"hash": "3e6dacc1575c6a8c76422255eca03529bbf4c0dda75dfc110b22d6dc4152396f",
-						"indexes": { "data": 0, "gas": 0, "value": 0 }
+						"indexes": { "data": 0, "gas": 0, "value": 0 },
+						"txbytes": "0x01"
 					},
 					{
 						"hash": "99a450d8ce5b987a71346d8a0a1203711f770745c7ef326912e46761f14cd764",
-						"indexes": { "data": 0, "gas": 0, "value": 1 }
+						"indexes": { "data": 0, "gas": 0, "value": 1 },
+						"txbytes": "0x01"
 					}
 				],
 				"EIP158": [
 					{
 						"hash": "3e6dacc1575c6a8c76422255eca03529bbf4c0dda75dfc110b22d6dc4152396f",
-						"indexes": { "data": 0, "gas": 0, "value": 0 }
+						"indexes": { "data": 0, "gas": 0, "value": 0 },
+						"txbytes": "0x01"
 					},
 					{
 						"hash": "99a450d8ce5b987a71346d8a0a1203711f770745c7ef326912e46761f14cd764",
-						"indexes": { "data": 0, "gas": 0, "value": 1  }
+						"indexes": { "data": 0, "gas": 0, "value": 1  },
+						"txbytes": "0x01"
 					}
 				]
 			},
