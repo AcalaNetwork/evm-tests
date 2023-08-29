@@ -287,7 +287,7 @@ fn test_run(name: &str, test: Test) {
 						}
 
 						for address in executor.state().deleted_accounts() {
-							let _ = EVM::remove_contract(&H160::default(), &address);
+							let _ = EVM::remove_contract(&caller, &address);
 						}
 
 						let actual_fee = executor.fee(vicinity.gas_price).saturated_into::<i128>();

@@ -3,14 +3,11 @@ stCreate2/Create2Recursive
 stStaticCall/static_Call50000_ecrec
 stQuadraticComplexityTest/Call50000_ecrec
 
-// TODO: new tests
 // large values
 stTransactionTest/ValueOverflow
-stTransactionTest/HighGasPrice
-stCreateTest/CreateTransactionHighNonce
+
+// https://eips.ethereum.org/EIPS/eip-2681 not implemented yet
 stCreateTest/CREATE_HighNonce
 stCreate2/CREATE2_HighNonce
 stCreate2/CREATE2_HighNonceDelegatecall
-// TODO: investigate
-stSystemOperationsTest/multiSelfdestruct
 stCreateTest/CreateAddressWarmAfterFail

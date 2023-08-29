@@ -28,7 +28,7 @@ pub fn run(dir: &str) {
 	}
 }
 
-// TODO: upgrade to GeneralStateTests/VMTests instead of using LegacyTests version
+// LegacyTests VM tests
 #[test]
 fn vm_arithmetic() {
 	run("res/ethtests/LegacyTests/Constantinople/VMTests/vmArithmeticTest");

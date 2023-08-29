@@ -279,7 +279,10 @@ pub fn setup_state(state: BTreeMap<H160, MemoryAccount>, block_number: u64, time
 		let contract_info = if code_size > 0 {
 			Some(ContractInfo {
 				code_hash,
-				maintainer: Default::default(),
+				maintainer:
+					<Runtime as module_evm::Config>::AddressMapping::get_or_create_evm_address(
+						&crate::mock::TreasuryAccount::get(),
+					),
 				published: true,
 			})
 		} else {

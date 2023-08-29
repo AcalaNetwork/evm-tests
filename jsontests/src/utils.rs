@@ -175,6 +175,10 @@ pub mod transaction {
 		caller_balance: U256,
 		config: &evm_utility::evm::Config,
 	) -> Result<Transaction, InvalidTxReason> {
+		if tx.nonce.0 == U256::from(u64::MAX) {
+			return Err(InvalidTxReason::NonceHasMaxValue);
+		}
+
 		match intrinsic_gas(&tx, config) {
 			None => return Err(InvalidTxReason::IntrinsicGas),
 			Some(required_gas) => {
@@ -188,7 +192,12 @@ pub mod transaction {
 			return Err(InvalidTxReason::GasLimitReached);
 		}
 
-		let required_funds = tx.gas_limit.0 * tx.gas_price.0 + tx.value.0;
+		let required_funds = tx
+			.gas_limit
+			.0
+			.checked_mul(tx.gas_price.0)
+			.and_then(|v| v.checked_add(tx.value.0))
+			.ok_or(InvalidTxReason::OutOfFund)?;
 		if caller_balance < required_funds {
 			return Err(InvalidTxReason::OutOfFund);
 		}
@@ -224,6 +233,7 @@ pub mod transaction {
 		IntrinsicGas,
 		OutOfFund,
 		GasLimitReached,
+		NonceHasMaxValue,
 	}
 
 	impl std::fmt::Display for InvalidTxReason {
@@ -232,6 +242,7 @@ pub mod transaction {
 				InvalidTxReason::IntrinsicGas => write!(f, "TR_IntrinsicGas"),
 				InvalidTxReason::OutOfFund => write!(f, "TR_NoFunds"),
 				InvalidTxReason::GasLimitReached => write!(f, "TR_GasLimitReached"),
+				InvalidTxReason::NonceHasMaxValue => write!(f, "TR_NonceHasMaxValue"),
 			}
 		}
 	}
