@@ -4,7 +4,7 @@ use frame_support::{
 	assert_ok, construct_runtime, ord_parameter_types, parameter_types,
 	traits::{Everything, FindAuthor, Nothing},
 	weights::Weight,
-	BoundedVec, ConsensusEngineId, RuntimeDebug,
+	BoundedVec, ConsensusEngineId,
 };
 use frame_system::{AccountInfo, EnsureSignedBy};
 use module_evm::{
@@ -22,7 +22,7 @@ use sp_core::{H160, H256, U256};
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::{
 	traits::{BlakeTwo256, BlockNumberProvider, Convert, IdentityLookup, Zero},
-	AccountId32, BuildStorage, SaturatedConversion,
+	AccountId32, BuildStorage, SaturatedConversion, RuntimeDebug,
 };
 use std::convert::TryInto;
 use std::{collections::BTreeMap, str::FromStr};
