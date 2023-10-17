@@ -22,7 +22,7 @@ use sp_core::{H160, H256, U256};
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::{
 	traits::{BlakeTwo256, BlockNumberProvider, Convert, IdentityLookup, Zero},
-	AccountId32, BuildStorage, SaturatedConversion, RuntimeDebug,
+	AccountId32, BuildStorage, RuntimeDebug, SaturatedConversion,
 };
 use std::convert::TryInto;
 use std::{collections::BTreeMap, str::FromStr};
