@@ -30,11 +30,13 @@ pub fn run(dir: &str) {
 			continue;
 		}
 
-		let file = File::open(path).expect("Open file failed");
+		let file = File::open(&path).expect("Open file failed");
 
 		let reader = BufReader::new(file);
-		let coll = serde_json::from_reader::<_, HashMap<String, statetests::Test>>(reader)
-			.expect("Parse test cases failed");
+		let coll: HashMap<String, statetests::Test> = serde_json::from_reader(reader)
+			.unwrap_or_else(|e| {
+				panic!("Parsing test case {:?} failed: {:?}", path, e);
+			});
 
 		for (name, test) in coll {
 			statetests::test(&name, test);

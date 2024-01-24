@@ -1,14 +1,14 @@
 use crate::mock::{deposit, get_state, new_test_ext, setup_state, withdraw, Runtime, EVM};
 use crate::utils::*;
 use ethjson::spec::ForkSpec;
-use evm_utility::evm::{backend::MemoryAccount, Config};
+use evm_utility::evm::{backend::MemoryAccount, executor::stack::PrecompileFn, Config};
 use libsecp256k1::SecretKey;
 use module_evm::{
 	precompiles::{
 		Blake2F, Bn128Add, Bn128Mul, Bn128Pairing, ECRecover, Identity, IstanbulModexp, Modexp,
 		Precompile, Ripemd160, Sha256,
 	},
-	runner::state::{PrecompileFn, StackState},
+	runner::state::StackState,
 	StackExecutor, StackSubstateMetadata, SubstrateStackState, Vicinity,
 };
 use primitives::convert_decimals_to_evm;
@@ -77,6 +77,23 @@ impl Test {
 			return None;
 		}
 
+		let block_randomness = if spec.is_eth2() {
+			self.0.env.random.map(|r| {
+				// Convert between U256 and H256. U256 is in little-endian but since H256 is just
+				// a string-like byte array, it's big endian (MSB is the first element of the array).
+				//
+				// Byte order here is important because this opcode has the same value as DIFFICULTY
+				// (0x44), and so for older forks of Ethereum, the threshold value of 2^64 is used to
+				// distinguish between the two: if it's below, the value corresponds to the DIFFICULTY
+				// opcode, otherwise to the PREVRANDAO opcode.
+				let mut buf = [0u8; 32];
+				r.0.to_big_endian(&mut buf);
+				H256(buf)
+			})
+		} else {
+			None
+		};
+
 		Some(Vicinity {
 			gas_price,
 			origin: self.unwrap_caller(),
@@ -88,6 +105,7 @@ impl Test {
 			block_gas_limit: Some(self.0.env.gas_limit.into()),
 			// chain_id: U256::one(),
 			block_base_fee_per_gas: Some(block_base_fee_per_gas),
+			block_randomness,
 		})
 	}
 }
@@ -99,24 +117,40 @@ impl JsonPrecompile {
 		match spec {
 			ForkSpec::Istanbul => {
 				let mut map = BTreeMap::<H160, PrecompileFn>::new();
-				map.insert(H160::from_low_u64_be(1), <ECRecover as Precompile>::execute);
-				map.insert(H160::from_low_u64_be(2), <Sha256 as Precompile>::execute);
-				map.insert(H160::from_low_u64_be(3), <Ripemd160 as Precompile>::execute);
-				map.insert(H160::from_low_u64_be(4), <Identity as Precompile>::execute);
-				map.insert(H160::from_low_u64_be(5), IstanbulModexp::execute);
-				map.insert(H160::from_low_u64_be(6), Bn128Add::execute);
-				map.insert(H160::from_low_u64_be(7), Bn128Mul::execute);
-				map.insert(H160::from_low_u64_be(8), Bn128Pairing::execute);
-				map.insert(H160::from_low_u64_be(9), Blake2F::execute);
+				map.insert(
+					H160::from_low_u64_be(1),
+					<ECRecover as Precompile>::execute_ext,
+				);
+				map.insert(
+					H160::from_low_u64_be(2),
+					<Sha256 as Precompile>::execute_ext,
+				);
+				map.insert(
+					H160::from_low_u64_be(3),
+					<Ripemd160 as Precompile>::execute_ext,
+				);
+				map.insert(
+					H160::from_low_u64_be(4),
+					<Identity as Precompile>::execute_ext,
+				);
+				map.insert(H160::from_low_u64_be(5), IstanbulModexp::execute_ext);
+				map.insert(H160::from_low_u64_be(6), Bn128Add::execute_ext);
+				map.insert(H160::from_low_u64_be(7), Bn128Mul::execute_ext);
+				map.insert(H160::from_low_u64_be(8), Bn128Pairing::execute_ext);
+				map.insert(H160::from_low_u64_be(9), Blake2F::execute_ext);
 				Some(map)
 			}
 			ForkSpec::Berlin => {
 				let mut map = Self::precompile(&ForkSpec::Istanbul).unwrap();
-				map.insert(H160::from_low_u64_be(5), Modexp::execute);
+				map.insert(H160::from_low_u64_be(5), Modexp::execute_ext);
 				Some(map)
 			}
 			// precompiles for London and Berlin are the same
 			ForkSpec::London => Self::precompile(&ForkSpec::Berlin),
+			// precompiles for Merge and Berlin are the same
+			ForkSpec::Merge => Self::precompile(&ForkSpec::Berlin),
+			// precompiles for Shanghai and Berlin are the same
+			ForkSpec::Shanghai => Self::precompile(&ForkSpec::Berlin),
 			_ => None,
 		}
 	}
@@ -173,8 +207,10 @@ fn test_run(name: &str, test: Test) {
 				ethjson::spec::ForkSpec::Istanbul => (Config::istanbul(), true),
 				ethjson::spec::ForkSpec::Berlin => (Config::berlin(), true),
 				ethjson::spec::ForkSpec::London => (Config::london(), true),
+				ethjson::spec::ForkSpec::Merge => (Config::merge(), true),
+				ethjson::spec::ForkSpec::Shanghai => (Config::shanghai(), true),
 				_spec => {
-					println!("Skip spec {:?}", spec);
+					println!("Skip spec {spec:?}");
 					return;
 				}
 			};
@@ -291,8 +327,9 @@ fn test_run(name: &str, test: Test) {
 						}
 
 						let actual_fee = executor.fee(vicinity.gas_price).saturated_into::<i128>();
-						let miner_reward = if let ForkSpec::London = spec {
-							// see EIP-1559
+						// Forks after London burn miner rewards and thus have different gas fee
+						// calculation (see EIP-1559)
+						let miner_reward = if spec.is_eth2() {
 							let max_priority_fee_per_gas =
 								test.0.transaction.max_priority_fee_per_gas();
 							let max_fee_per_gas = test.0.transaction.max_fee_per_gas();

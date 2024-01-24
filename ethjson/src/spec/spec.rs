@@ -63,6 +63,17 @@ pub enum ForkSpec {
 	ConstantinopleFixToIstanbulAt5,
 }
 
+impl ForkSpec {
+	/// Returns true if the fork is at or after the merge.
+	pub fn is_eth2(&self) -> bool {
+		// NOTE: Include new forks in this match arm.
+		matches!(
+			*self,
+			ForkSpec::London | ForkSpec::Merge | ForkSpec::Shanghai
+		)
+	}
+}
+
 /// Spec deserialization.
 #[derive(Debug, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]

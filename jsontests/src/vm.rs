@@ -4,7 +4,7 @@ use evm_utility::evm::backend::MemoryAccount;
 use evm_utility::evm::Config;
 use module_evm::{StackExecutor, StackSubstateMetadata, SubstrateStackState, Vicinity};
 use serde::Deserialize;
-use sp_core::H160;
+use sp_core::{H160, H256};
 use std::collections::BTreeMap;
 use std::rc::Rc;
 
@@ -17,6 +17,19 @@ impl Test {
 	}
 
 	pub fn unwrap_to_vicinity(&self) -> Vicinity {
+		let block_randomness = self.0.env.random.map(|r| {
+			// Convert between U256 and H256. U256 is in little-endian but since H256 is just
+			// a string-like byte array, it's big endian (MSB is the first element of the array).
+			//
+			// Byte order here is important because this opcode has the same value as DIFFICULTY
+			// (0x44), and so for older forks of Ethereum, the threshold value of 2^64 is used to
+			// distinguish between the two: if it's below, the value corresponds to the DIFFICULTY
+			// opcode, otherwise to the PREVRANDAO opcode.
+			let mut buf = [0u8; 32];
+			r.0.to_big_endian(&mut buf);
+			H256(buf)
+		});
+
 		Vicinity {
 			gas_price: self.0.transaction.gas_price.into(),
 			origin: self.0.transaction.origin.into(),
@@ -24,6 +37,7 @@ impl Test {
 			block_difficulty: Some(self.0.env.difficulty.into()),
 			block_coinbase: Some(self.0.env.author.into()),
 			block_base_fee_per_gas: Some(self.0.env.block_base_fee_per_gas.0),
+			block_randomness,
 		}
 	}
 
@@ -78,7 +92,13 @@ pub fn test(name: &str, test: Test) {
 		let code = test.unwrap_to_code();
 		let data = test.unwrap_to_data();
 		let context = test.unwrap_to_context();
-		let mut runtime = module_evm::evm::Runtime::new(code, data, context, &config);
+		let mut runtime = module_evm::evm::Runtime::new(
+			code,
+			data,
+			context,
+			config.stack_limit,
+			config.memory_limit,
+		);
 
 		let reason = executor.execute(&mut runtime);
 
