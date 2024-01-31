@@ -1,7 +1,7 @@
 use codec::{Decode, Encode};
 use evm_utility::evm::backend::MemoryAccount;
 use frame_support::{
-	assert_ok, construct_runtime, ord_parameter_types, parameter_types,
+	assert_ok, construct_runtime, derive_impl, ord_parameter_types, parameter_types,
 	traits::{Everything, FindAuthor, Nothing},
 	weights::Weight,
 	BoundedVec, ConsensusEngineId,
@@ -32,34 +32,11 @@ pub type Nonce = u64;
 pub type Balance = u128;
 pub type AccountData = pallet_balances::AccountData<Balance>;
 
-parameter_types! {
-	pub const BlockHashCount: u64 = 250;
-}
-
+#[derive_impl(frame_system::config_preludes::TestDefaultConfig as frame_system::DefaultConfig)]
 impl frame_system::Config for Runtime {
-	type BaseCallFilter = Everything;
-	type BlockWeights = ();
-	type BlockLength = ();
-	type RuntimeOrigin = RuntimeOrigin;
-	type RuntimeCall = RuntimeCall;
-	type Nonce = Nonce;
-	type Hash = H256;
-	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Block = Block;
-	type RuntimeEvent = RuntimeEvent;
-	type BlockHashCount = BlockHashCount;
-	type DbWeight = ();
-	type Version = ();
-	type PalletInfo = PalletInfo;
-	type AccountData = AccountData;
-	type OnNewAccount = ();
-	type OnKilledAccount = module_evm::CallKillAccount<Runtime>;
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
-	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_types! {
