@@ -2,7 +2,7 @@ use codec::{Decode, Encode};
 use evm_utility::evm::backend::MemoryAccount;
 use frame_support::{
 	assert_ok, construct_runtime, derive_impl, ord_parameter_types, parameter_types,
-	traits::{Everything, FindAuthor, Nothing},
+	traits::{FindAuthor, Nothing},
 	weights::Weight,
 	BoundedVec, ConsensusEngineId,
 };
@@ -21,7 +21,7 @@ use scale_info::TypeInfo;
 use sp_core::{H160, H256, U256};
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::{
-	traits::{BlakeTwo256, BlockNumberProvider, Convert, IdentityLookup, Zero},
+	traits::{BlockNumberProvider, Convert, IdentityLookup, Zero},
 	AccountId32, BuildStorage, RuntimeDebug, SaturatedConversion,
 };
 use std::convert::TryInto;
@@ -34,9 +34,11 @@ pub type AccountData = pallet_balances::AccountData<Balance>;
 
 #[derive_impl(frame_system::config_preludes::TestDefaultConfig as frame_system::DefaultConfig)]
 impl frame_system::Config for Runtime {
+	type Nonce = Nonce;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Block = Block;
+	type AccountData = AccountData;
 }
 
 parameter_types! {
