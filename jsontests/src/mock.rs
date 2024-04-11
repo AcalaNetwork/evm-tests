@@ -11,7 +11,7 @@ use module_evm::{
 	convert_decimals_to_evm, runner::state::StackState, ContractInfo, EvmChainId, EvmTask,
 	MaxCodeSize, SubstrateStackState,
 };
-use module_support::{AddressMapping, DispatchableTask};
+use module_support::{mocks::TestRandomness, AddressMapping, DispatchableTask};
 use orml_traits::{parameter_type_with_key, BasicCurrencyExtended};
 use primitives::{
 	define_combined_task, task::TaskResult, Amount, BlockNumber, CurrencyId, ReserveIdentifier,
@@ -201,6 +201,7 @@ impl module_evm::Config for Runtime {
 
 	type Runner = module_evm::runner::stack::Runner<Self>;
 	type FindAuthor = AuthorGiven;
+	type Randomness = TestRandomness<Self>;
 	type Task = ScheduledTasks;
 	type IdleScheduler = IdleScheduler;
 	type WeightInfo = ();
