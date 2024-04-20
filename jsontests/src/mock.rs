@@ -130,6 +130,7 @@ impl BlockNumberProvider for MockBlockNumberProvider {
 impl module_idle_scheduler::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
+	type Index = u32;
 	type Task = ScheduledTasks;
 	type MinimumWeightRemainInBlock = MinimumWeightRemainInBlock;
 	type DisableBlockThreshold = DisableBlockThreshold;
