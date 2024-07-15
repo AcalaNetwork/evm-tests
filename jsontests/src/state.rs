@@ -243,7 +243,8 @@ fn test_run(name: &str, test: Test) {
 					spec,
 					ForkSpec::EIP150
 						| ForkSpec::EIP158 | ForkSpec::Frontier
-						| ForkSpec::Homestead | ForkSpec::Byzantium
+						| ForkSpec::Homestead
+						| ForkSpec::Byzantium
 						| ForkSpec::Constantinople
 						| ForkSpec::ConstantinopleFix
 						| ForkSpec::Istanbul
