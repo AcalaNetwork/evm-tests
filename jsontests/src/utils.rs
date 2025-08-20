@@ -11,14 +11,14 @@ use std::{
 
 pub fn u256_to_h256(u: U256) -> H256 {
 	let mut h = H256::default();
-	u.to_big_endian(&mut h[..]);
+	u.write_as_big_endian(&mut h[..]);
 	h
 }
 
 pub fn unwrap_to_account(s: &ethjson::spec::Account) -> MemoryAccount {
 	MemoryAccount {
-		balance: s.balance.unwrap().into(),
-		nonce: s.nonce.unwrap().into(),
+		balance: U256::from(s.balance.unwrap()),
+		nonce: U256::from(s.nonce.unwrap()),
 		code: s.code.clone().unwrap().into(),
 		storage: s
 			.storage
@@ -218,9 +218,9 @@ pub mod transaction {
 			.collect();
 
 		let cost = if is_contract_creation {
-			gasometer::create_transaction_cost(data, &access_list)
+			gasometer::create_transaction_cost(data, &access_list, &vec![])
 		} else {
-			gasometer::call_transaction_cost(data, &access_list)
+			gasometer::call_transaction_cost(data, &access_list, &vec![])
 		};
 
 		let mut g = Gasometer::new(u64::MAX, config);

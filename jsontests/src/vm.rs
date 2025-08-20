@@ -26,7 +26,7 @@ impl Test {
 			// distinguish between the two: if it's below, the value corresponds to the DIFFICULTY
 			// opcode, otherwise to the PREVRANDAO opcode.
 			let mut buf = [0u8; 32];
-			r.0.to_big_endian(&mut buf);
+			r.0.write_as_big_endian(&mut buf);
 			H256(buf)
 		});
 
