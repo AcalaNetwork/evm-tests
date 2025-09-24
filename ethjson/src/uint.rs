@@ -102,7 +102,7 @@ impl Visitor<'_> for UintVisitor {
 			_ if value.starts_with("0x:bigint 0x") => parse(&value[12..])?,
 			_ if value.starts_with("0x") => parse(&value[2..])?,
 			_ => U256::from_dec_str(value).map_err(|e| {
-				Error::custom(format!("Invalid decimal value {}: {:?}", value, e).as_str())
+				Error::custom(format!("Invalid decimal value {value}: {e:?}").as_str())
 			})?,
 		};
 
